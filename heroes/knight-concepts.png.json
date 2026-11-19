@@ -1,0 +1,144 @@
+{
+  "model": "gpt-image-2.6-sunburst",
+  "endpoint": "POST https://api.openai.com/v1/images/generations",
+  "parameters": {
+    "model": "gpt-image-2.6-sunburst",
+    "n": 1,
+    "size": "2048x1152",
+    "quality": "max",
+    "complexity": "high",
+    "output_format": "png",
+    "background": "transparent"
+  },
+  "prompt_file": "/tmp/claude-1000/-home-salvi-www-salvi-games-pixel-art-tests/566f1730-a4bc-4dce-9daf-5a2415f59168/scratchpad/knight-concepts.json",
+  "prompt_spec": {
+    "type": "pixel art",
+    "task": "Character concept sheet for a 2D side-scrolling platform game. Draw 3 different concepts of one medieval warrior with one sword and one shield. The user will select one winner. The winner will be cut into separate body parts and animated with a skeletal cutout rig, so every concept must be easy to separate into parts.",
+    "characters": [
+      {
+        "position": "left",
+        "name": "Crusader Knight",
+        "description": "A heavy knight in full steel plate armor with dents and scratches. Closed flat-top great helm with a narrow eye slit and small breathing holes. Off-white surcoat with a faded red cross, belted at the waist with a brown leather belt, the hem ends at mid-thigh. Heater shield with the same faded red cross on an off-white field and a worn steel rim. Straight longsword with a simple cross guard and a brown leather grip."
+      },
+      {
+        "position": "middle",
+        "name": "Sellsword",
+        "description": "A rugged mercenary with a visible weathered face, a short dark beard and a scar across the nose. Conical steel helmet with a nasal guard. Chainmail hauberk over a padded brown gambeson, the mail ends at mid-thigh. Leather bracers, leather gloves, a belt with a small pouch, wool trousers wrapped with leg bindings and leather boots. Round wooden shield with an iron boss and an iron rim, painted in faded blue and cream halves. Short arming sword with a brass pommel."
+      },
+      {
+        "position": "right",
+        "name": "Black Knight",
+        "description": "A grim knight in blackened steel plate armor with dark grey highlights and a few crimson accents. Bascinet helmet with a pointed hounskull visor, closed. Short tattered crimson tabard that ends at mid-thigh. Small heater shield painted black with a tarnished gold emblem of a stylized hawk. Hand-and-a-half sword with a dark steel blade and a black grip."
+      }
+    ],
+    "view": "Side view for a side-scroller. All three characters face right. The torso and the head are turned about 25 degrees toward the viewer, so a small part of the chest front and the face front is visible. It is not a perfect profile silhouette.",
+    "pose": "Neutral ready stance, the same for all three. Both feet flat on the ground line. The near leg is a little forward and the far leg is a little back, with a small gap between the legs. The arms are slightly away from the torso so that each arm is clearly visible.",
+    "weapons": "The sword is in the hand nearest to the viewer, held at waist height, the blade points forward and slightly up. The shield is strapped on the other forearm, the arm farther from the viewer, and is held forward in front of the chest with its painted face visible at a slight angle.",
+    "rig_readiness": "Design for a cutout skeletal rig. Each body part reads as a separate solid shape: head with helmet, torso, upper arm, forearm, hand, thigh, shin, foot, sword, shield. Mark each joint clearly with armor plates, straps, cuffs or belts at the shoulder, elbow, wrist, hip, knee and ankle. Clothing ends above the knee, so the knees and the shins are fully visible. No cape, no long robe, no long hair, no loose cloth that hides a joint.",
+    "scale": "Each character is about 100 art pixels tall from the boot sole to the top of the helmet, about 400 image pixels. Realistic adult proportions, about 6.5 heads tall. Not chibi, not cartoon.",
+    "layout": "The three characters stand side by side from left to right on the same ground line near the bottom of the image, evenly spaced. Large empty transparent space between them. The figures, the swords and the shields never touch or overlap each other and stay fully inside the image.",
+    "logical_grid": "512x288 art pixels for the full image; each art pixel is one solid 4x4 block of image pixels",
+    "style": "Detailed high-end 32-bit era arcade pixel art. Gritty, grounded, battle-worn medieval look. Each material has 4 to 5 shading tones: polished steel, dull iron, leather, cloth, wood, skin. Light comes from the top left.",
+    "palette_size": "about 24 colors per character",
+    "palette": [
+      "#14161C",
+      "#2B2F3A",
+      "#4A5160",
+      "#7C8696",
+      "#B9C2CC",
+      "#E9EDF0",
+      "#3B2618",
+      "#6B4426",
+      "#9C6B3E",
+      "#D2A26A",
+      "#7A1E1E",
+      "#B03A2E",
+      "#E3DCC8",
+      "#2E4A6B",
+      "#5A7FA6",
+      "#B8963E",
+      "#E8C66A",
+      "#C48B6A",
+      "#8A5A44"
+    ],
+    "outline": "1 art pixel dark outline around each character, its sword and its shield",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "avoid": [
+      "text",
+      "labels",
+      "names",
+      "numbers",
+      "capes",
+      "long robes or skirts below the knee",
+      "long hair",
+      "sword in the hand farther from the viewer",
+      "characters facing left or facing the viewer",
+      "cute or chibi proportions",
+      "anti-aliasing",
+      "gradients",
+      "soft shadows",
+      "glow",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "checkerboard pattern",
+      "watermark"
+    ]
+  },
+  "input_images": [],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/knight-concepts.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/knight-concepts-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.0139618,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "grid_retry": null,
+    "native_size": "640x363",
+    "art_pixel_size": {
+      "x": 3.2008,
+      "y": 3.1717
+    },
+    "grid": {
+      "cols": 640,
+      "rows": 363,
+      "pixelSize": {
+        "x": 3.2008,
+        "y": 3.1717
+      },
+      "quality": 3,
+      "notes": []
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 1267,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 1267
+    },
+    "output_tokens": 5650,
+    "output_tokens_details": {
+      "image_tokens": 5650,
+      "text_tokens": 0
+    },
+    "total_tokens": 6917
+  },
+  "estimated_cost_usd": 0.175835,
+  "request_id": "req_ba01ac5cc83f491a928e51dc56b9418a"
+}

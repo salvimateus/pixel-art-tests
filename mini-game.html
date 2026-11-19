@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exterminador no esgoto</title>
+<meta name="description" content="Mini game de plataforma: o Exterminador queima slimes no esgoto com o lança-chamas.">
+<style>
+@layer reset, base, components;
+
+@layer reset {
+  :where(*, *::before, *::after) { box-sizing: border-box; margin: 0; padding: 0; }
+}
+
+@layer base {
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body {
+    display: grid;
+    place-items: center;
+    font: 12px/1.35 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color: #b3ab9d;
+  }
+}
+
+@layer components {
+  .screen { display: block; image-rendering: pixelated; }
+  .hud {
+    position: fixed;
+    inset: auto 0 0 0;
+    padding: 4px 8px;
+    background: rgb(0 0 0 / 0.6);
+    text-align: center;
+    white-space: pre-wrap;
+    pointer-events: none;
+  }
+  .hud-pad { color: #e0b766; }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 14px;
+    text-align: center;
+    pointer-events: none;
+  }
+  .overlay[hidden] { display: none; }
+  .overlay-title {
+    font-size: clamp(18px, 3.4vw, 42px);
+    font-weight: 700;
+    color: #ffcf6b;
+    text-shadow: 3px 3px 0 #5a1d12, 0 0 18px rgb(255 120 30 / 0.5);
+  }
+  .overlay-sub { font-size: clamp(12px, 1.6vw, 18px); color: #e6dfd0; text-shadow: 2px 2px 0 #000; }
+}
+</style>
+</head>
+<body>
+<canvas class="screen" id="screen" width="960" height="540"></canvas>
+<div class="overlay" id="overlay" hidden>
+  <h1 class="overlay-title" id="overlay-title">Todos os slimes foram queimados</h1>
+  <p class="overlay-sub" id="overlay-sub">Pressione Menu ou Enter para recomeçar</p>
+</div>
+<div class="hud" id="hud"></div>
+<script>
+'use strict';
+(() => {
+// ---------------------------------------------------------------- tuning
+const W = 960, H = 540, STEP = 1 / 60;
+const T = {
+  gravity: 2300, fallMul: 1.25, maxFall: 1100, jumpV: 900, jumpCut: 0.45,
+  coyote: 0.1, jumpBuffer: 0.12, takeoffMax: 2 / 60,
+  accel: 2600, decel: 3000, airAccel: 1700, fireDecel: 6000,
+  walkFps: 12, // walk anim fps in game; speed follows stride * fps / frames
+  fireDps: 0.4, burnTime: 3.0,
+  slimeSpeedMul: 2.0, panicMul: 4.5, slimeHalfW: 66, slimeBodyW: 130, slimeBodyH: 92,
+  lightCooldown: 2.0, heavyCooldown: 4.5, hurtCooldown: 0.4, heavyJumpV: 620, heavyReach: 300, shockRange: 210,
+  knockX: 540, knockY: 380,
+  lookAhead: 120, camLerp: 6, shakeMax: 18, traumaDecay: 1.4,
+  hitStop: 0.08, slowMoScale: 0.3, slowMoTime: 1.2,
+  particleCap: 1400, decalCap: 360,
+  lightDiv: 4, ambientAlpha: 0.62,
+};
+
+// ---------------------------------------------------------------- level
+const LEVEL_W = 2880, WALL = 62, PLAT_H = 14, TOP_INSET = 5;
+// Level layout; walkable tops are derived from the tile art at boot.
+const LAYOUT = [
+  { kind: 'stone', x: 430, top: 365 },
+  { kind: 'catwalk', x: 880, top: 342, mids: 1 },
+  { kind: 'stone', x: 1560, top: 360 },
+  { kind: 'catwalk', x: 2140, top: 335, mids: 1 },
+];
+let FLOOR_Y = 487;
+// Visual ground sink per character, in art px: moves only the sprite down, never the collision.
+const CHAR_CFG = { 'slime-drop': { groundSink: 5 }, exterminator: { groundSink: 0 } };
+// Extra visual offset per surface type, so every contact line sits inside the top face of its art.
+const SURF_VIS = { ground: 0, stone: 0, catwalk: 0 };
+const PLATFORMS = [];
+const DRIP_SPOTS = [];
+
+// ---------------------------------------------------------------- helpers
+const rand = Math.random;
+const rr = (a, b) => a + rand() * (b - a);
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+function rng(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function ctx2d(c, opts) { const g = c.getContext('2d', opts); g.imageSmoothingEnabled = false; return g; }
+function overlaps(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+
+// A single-file build fills these maps: inlined manifest scripts and images as data URIs.
+const EMBEDDED_SCRIPTS = window.EMBEDDED_SCRIPTS || {};
+const EMBEDDED_ASSETS = window.EMBEDDED_ASSETS || {};
+function loadScript(src) {
+  if (EMBEDDED_SCRIPTS[src]) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve(true);
+    s.onerror = () => { s.remove(); resolve(false); };
+    document.head.appendChild(s);
+  });
+}
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('image ' + src));
+    img.src = EMBEDDED_ASSETS[src] || src;
+  });
+}
+function silhouette(img, color) {
+  const c = mkCanvas(img.width, img.height), g = ctx2d(c);
+  g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'source-in';
+  g.fillStyle = color;
+  g.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+
+// Hit rectangles per effect frame from the manifest `hitboxes`; the full frame box when the key is missing.
+function effectRects(e) {
+  const out = [];
+  for (let f = 0; f < e.frames; f++) {
+    const hb = e.hitboxes && e.hitboxes[f];
+    out.push(hb ? hb.map((r) => [r.x, r.y, r.w, r.h]) : [[0, 0, e.frameWidth, e.frameHeight]]);
+  }
+  return { rects: out, source: e.hitboxes ? 'manifest' : 'frame box' };
+}
+
+function buildSheet(m, img, effImgs) {
+  const anims = {};
+  for (const a of m.animations) anims[a.name] = a;
+  const s = { id: m.id, img, fw: m.frameWidth, fh: m.frameHeight, pivot: m.pivot, anims, effects: {}, sink: (CHAR_CFG[m.id] || {}).groundSink || 0 };
+  s.white = silhouette(img, '#ffffff');
+  s.orange = silhouette(img, '#ff7a22');
+  for (const [k, e] of Object.entries(m.effects || {})) {
+    const ei = effImgs[k];
+    const cols = Math.max(1, Math.floor(ei.width / e.frameWidth));
+    const r = effectRects(e);
+    s.effects[k] = { img: ei, fw: e.frameWidth, fh: e.frameHeight, frames: e.frames, anchor: e.anchor, cols, rects: r.rects, rectSource: r.source };
+  }
+  return s;
+}
+
+// Simple stand-in used only when the Exterminator manifest is missing.
+function makePlaceholderExterminator() {
+  const fw = 140, fh = 160, cols = 14, rows = 4;
+  const sheet = mkCanvas(fw * cols, fh * rows), g = ctx2d(sheet);
+  const C = { suit: '#8a7a34', suitD: '#5c5126', mask: '#2b2b2f', visor: '#6b8f78', tank: '#5a3d31', metal: '#4b4b53', boot: '#1d1b1a' };
+  function guy(ox, oy, bob, spread, gunY) {
+    const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(ox + x, oy + y, w, h); };
+    r(38, 66 + bob, 18, 46, C.tank);
+    r(58 - spread, 108 + bob, 13, 51 - bob, C.suitD); r(54 - spread, 150, 20, 10, C.boot);
+    r(52, 62 + bob, 36, 50, C.suit);
+    r(56, 28 + bob, 30, 36, C.suit); r(78, 38 + bob, 12, 22, C.mask); r(80, 41 + bob, 10, 7, C.visor);
+    r(70 + spread, 108 + bob, 13, 51 - bob, C.suit); r(68 + spread, 150, 20, 10, C.boot);
+    r(66, 86 + gunY, 52, 10, C.metal); r(118, 89 + gunY, 18, 5, C.metal); r(74, 74 + bob, 10, 20, C.suitD);
+  }
+  for (let i = 0; i < 8; i++) guy(i * fw, 0, i % 4 < 2 ? 0 : 1, 3, 6);
+  for (let i = 0; i < 8; i++) guy(i * fw, fh, Math.abs(Math.sin(i * Math.PI / 4)) * 2 | 0, Math.round(Math.sin(i * Math.PI / 4) * 12), 6);
+  for (let i = 0; i < 10; i++) guy(i * fw, fh * 2, i < 2 || i > 7 ? 6 : -2, 6, 6);
+  for (let i = 0; i < 14; i++) guy(i * fw, fh * 3, 0, 6, i < 3 ? 6 - i * 3 : i > 9 ? (i - 9) * 2 : 0);
+  const ffw = 220, ffh = 90, nf = 5, fire = mkCanvas(ffw * nf, ffh), fg = ctx2d(fire), R = rng(7);
+  const lens = [70, 200, 210, 120, 60], layers = [['#a8301a', 1], ['#e8661c', 0.72], ['#ffb43a', 0.48], ['#fff0b0', 0.25]];
+  for (let k = 0; k < nf; k++) {
+    fg.save(); fg.beginPath(); fg.rect(k * ffw, 0, ffw, ffh); fg.clip();
+    for (const [col, sc] of layers) {
+      fg.fillStyle = col;
+      for (let t = 0; t <= lens[k]; t += 3) {
+        const u = t / lens[k];
+        fg.beginPath(); fg.arc(k * ffw + 4 + t, 45 - u * u * 12, (3 + u * 24) * sc * (0.85 + R() * 0.3), 0, 6.283); fg.fill();
+      }
+    }
+    fg.restore();
+  }
+  const id = fg.getImageData(0, 0, fire.width, fire.height);
+  for (let i = 3; i < id.data.length; i += 4) id.data[i] = id.data[i] > 100 ? 255 : 0;
+  fg.putImageData(id, 0, 0);
+  const fx = [null, null];
+  for (let i = 2; i < 14; i++) fx.push(i <= 10 ? { effect: 'fire', frame: i === 2 ? 0 : i >= 9 ? i - 6 : 1 + (i % 2), x: 136, y: 92 } : null);
+  return {
+    sheet, fire,
+    manifest: {
+      id: 'exterminator', image: sheet, frameWidth: fw, frameHeight: fh, pivot: { x: 70, y: 159 },
+      animations: [
+        { name: 'idle', row: 0, frames: 8, fps: 8, loop: true },
+        { name: 'walk', row: 1, frames: 8, fps: 10, loop: true, stride: 96 },
+        { name: 'jump', row: 2, frames: 10, fps: 12, loop: false, phases: { takeoff: [0, 1], air: [2, 6], land: [7, 9] } },
+        { name: 'attack', row: 3, frames: 14, fps: 12, loop: false, fx, phases: { start: [0, 2], sustain: [3, 8], end: [9, 13] } },
+      ],
+      effects: { fire: { image: fire, frameWidth: ffw, frameHeight: ffh, frames: nf, anchor: { x: 4, y: 45 } } },
+    },
+  };
+}
+
+// ---------------------------------------------------------------- animation
+function newAnim() { return { name: '', row: 0, from: 0, to: 0, loop: true, fps: 8, frame: 0, t: 0, done: false }; }
+function play(a, sheet, name, range, loop, restart) {
+  const d = sheet.anims[name];
+  const from = range ? range[0] : 0, to = range ? range[1] : d.frames - 1;
+  if (!restart && a.name === name && a.from === from && a.to === to) { a.loop = loop; return; }
+  a.name = name; a.row = d.row; a.from = from; a.to = to; a.loop = loop; a.fps = d.fps;
+  a.frame = from; a.t = 0; a.done = false;
+}
+function stepAnim(a, dt, mul) {
+  if (a.done) return false;
+  const before = a.frame;
+  a.t += dt * a.fps * (mul || 1);
+  while (a.t >= 1) {
+    a.t -= 1;
+    if (a.frame < a.to) a.frame++;
+    else if (a.loop) a.frame = a.from;
+    else { a.done = true; a.t = 0; break; }
+  }
+  return a.frame !== before;
+}
+function phases(sheet, name, key, fallback) {
+  const d = sheet.anims[name];
+  return (d.phases && d.phases[key]) || fallback(d.frames);
+}
+
+// ---------------------------------------------------------------- canvases
+const screen = document.getElementById('screen');
+let sctx = ctx2d(screen, { alpha: false });
+const buf = mkCanvas(W, H), g = ctx2d(buf, { alpha: false });
+const LD = T.lightDiv, LW = W / LD, LH = H / LD;
+const lightCv = mkCanvas(LW, LH), lg = ctx2d(lightCv);
+const glowCv = mkCanvas(LW, LH), gg = ctx2d(glowCv);
+const decalCv = mkCanvas(LEVEL_W, H), dg = ctx2d(decalCv);
+let levelCv = null;
+
+function gradSprite(r, g2, b, a0) {
+  const c = mkCanvas(64, 64), x = c.getContext('2d');
+  const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, `rgba(${r},${g2},${b},${a0})`);
+  gr.addColorStop(0.45, `rgba(${r},${g2},${b},${a0 * 0.45})`);
+  gr.addColorStop(1, `rgba(${r},${g2},${b},0)`);
+  x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+  return c;
+}
+const LIGHT_MASK = gradSprite(255, 255, 255, 1);
+const GLOW = { fire: gradSprite(255, 110, 30, 0.22), lime: gradSprite(150, 220, 40, 0.18), cold: gradSprite(200, 190, 140, 0.15) };
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const s = Math.max(1, Math.floor(Math.min((innerWidth * dpr) / W, (innerHeight * dpr) / H)));
+  screen.width = W * s; screen.height = H * s;
+  screen.style.width = (W * s) / dpr + 'px';
+  screen.style.height = (H * s) / dpr + 'px';
+  sctx = ctx2d(screen, { alpha: false });
+  view.scale = s;
+}
+const view = { scale: 1 };
+
+// ---------------------------------------------------------------- level art (baked from assets/level tiles)
+let LA = null, tilesImg = null, farCv = null, midImg = null;
+function piece(x, name, dx, dy, flip, sy0, sh) {
+  const r = LA.tiles.pieces[name];
+  const srcY = r[1] + (sy0 || 0), h = sh || r[3] - (sy0 || 0);
+  if (!flip) x.drawImage(tilesImg, r[0], srcY, r[2], h, dx, dy, r[2], h);
+  else { x.save(); x.translate(dx + r[2], 0); x.scale(-1, 1); x.drawImage(tilesImg, r[0], srcY, r[2], h, 0, dy, r[2], h); x.restore(); }
+}
+function layoutLevel() {
+  const pc = LA.tiles.pieces, meta = LA.tiles.meta;
+  FLOOR_Y = H - pc.ground[3] + meta.ground.surfaceY + TOP_INSET;
+  PLATFORMS.length = 0;
+  for (const l of LAYOUT) {
+    const w = l.kind === 'stone' ? pc.stonePlatform[2] : pc.catwalkLeft[2] + pc.catwalkMidTile[2] * l.mids + pc.catwalkRight[2];
+    const inset = l.kind === 'stone' ? 6 : 4;
+    PLATFORMS.push({ kind: l.kind, mids: l.mids, artX: l.x, x: l.x + inset, w: w - inset * 2, y: l.top, artW: w });
+  }
+}
+function surfVis(y) {
+  if (y === FLOOR_Y) return SURF_VIS.ground;
+  for (const p of PLATFORMS) if (y === p.y) return SURF_VIS[p.kind] || 0;
+  return 0;
+}
+// Visual contact line of a slime: its collision y plus the sink and the surface offset.
+function sb(s) { return s.y + SLIME.sink + surfVis(s.surf.y); }
+function buildLevel() {
+  const c = mkCanvas(LEVEL_W, H), x = ctx2d(c), pc = LA.tiles.pieces, meta = LA.tiles.meta;
+  DRIP_SPOTS.length = 0;
+  // props behind the play surfaces
+  const groundTop = FLOOR_Y - TOP_INSET - meta.ground.surfaceY;
+  const onFloor = (name, px, flip, sink) => piece(x, name, px, groundTop - pc[name][3] + (sink || 4), flip);
+  onFloor('drainGrate', 300, false, 2); onFloor('drainGrate', 1720, true, 2); onFloor('drainGrate', 2480, false, 2);
+  onFloor('barrel', 720, false); onFloor('barrel', 2040, true); onFloor('barrel', 2085, false);
+  onFloor('crate', 640, false); onFloor('crate', 1880, true); onFloor('crate', 2700, false); onFloor('crate', 2690, true, -36);
+  onFloor('bones', 1180, false); onFloor('bones', 2560, true); onFloor('bones', 160, true);
+  // hooks hanging from chains up to the top of the screen
+  for (const hx of [1350, 2420]) {
+    const hy = 210;
+    for (let y = hy - 16; y > -16; y -= 16) piece(x, 'chainHook', hx, y, false, 0, 16);
+    piece(x, 'chainHook', hx, hy, false);
+  }
+  // pipes with valves coming out of the end walls
+  piece(x, 'pipeValve', WALL - 20, 180, false);
+  piece(x, 'pipeValve', LEVEL_W - WALL - pc.pipeValve[2] + 20, 220, true);
+  // ground strip, mirrored every other tile to hide the seam
+  const gt = pc.groundTile;
+  for (let gx = 0, i = 0; gx < LEVEL_W; gx += gt[2], i++) piece(x, 'groundTile', gx, groundTop, i % 2 === 1);
+  // platforms
+  for (const p of PLATFORMS) {
+    if (p.kind === 'stone') {
+      const r = pc.stonePlatform, top = p.y - meta.stonePlatform.surfaceY - TOP_INSET, band = 40;
+      for (let y = top - band; y > -band; y -= band) piece(x, 'stonePlatform', p.artX, y, false, 0, band);
+      piece(x, 'stonePlatform', p.artX, top, false);
+      DRIP_SPOTS.push({ x: p.artX + 30, y: top + r[3] - 2 }, { x: p.artX + 85, y: top + r[3] - 4 });
+    } else {
+      const top = p.y - TOP_INSET;
+      piece(x, 'catwalkLeft', p.artX, top, false);
+      let cx = p.artX + pc.catwalkLeft[2];
+      for (let i = 0; i < p.mids; i++) { piece(x, 'catwalkMidTile', cx, top, i % 2 === 1); cx += pc.catwalkMidTile[2]; }
+      piece(x, 'catwalkRight', cx, top, false);
+      const bottom = top + pc.catwalkMid[3] - 3;
+      const drips = ['drip1', 'drip2', 'drip3'];
+      for (let i = 0, dx = p.artX + 70; dx < cx - 10; dx += 70, i++) {
+        const dn = drips[i % 3];
+        piece(x, dn, dx, bottom, false);
+        DRIP_SPOTS.push({ x: dx + (pc[dn][2] >> 1), y: bottom + pc[dn][3] });
+      }
+    }
+  }
+  // end walls: the full piece with the pipe elbow at the bottom, its upper part repeated above
+  const wr = pc.wall, wu = pc.wallUpper[3];
+  for (const side of [0, 1]) {
+    const wx = side ? LEVEL_W - wr[2] : 0, flip = side === 1;
+    const wtop = groundTop + 6 - wr[3];
+    piece(x, 'wall', wx, wtop, flip);
+    for (let y = wtop - wu; y > -wu; y -= wu) piece(x, 'wallUpper', wx, y, flip);
+  }
+  return c;
+}
+function buildFar(img) {
+  const c = mkCanvas(img.width * 2, img.height), x = ctx2d(c);
+  x.drawImage(img, 0, 0);
+  x.save(); x.translate(img.width * 2, 0); x.scale(-1, 1); x.drawImage(img, 0, 0); x.restore();
+  return c;
+}
+
+// ---------------------------------------------------------------- particles (pooled, struct of arrays)
+const PC = T.particleCap;
+const P = {
+  n: 0,
+  x: new Float32Array(PC), y: new Float32Array(PC), vx: new Float32Array(PC), vy: new Float32Array(PC),
+  life: new Float32Array(PC), max: new Float32Array(PC), size: new Float32Array(PC), grav: new Float32Array(PC),
+  drag: new Float32Array(PC), type: new Uint8Array(PC), seed: new Float32Array(PC),
+};
+const SMOKE = 0, EMBER = 1, FLAME = 2, GOO = 3, DUST = 4, DRIP = 5;
+function spawn(type, x, y, vx, vy, life, size, grav, drag) {
+  if (P.n >= PC) return;
+  const i = P.n++;
+  P.type[i] = type; P.x[i] = x; P.y[i] = y; P.vx[i] = vx; P.vy[i] = vy;
+  P.life[i] = life; P.max[i] = life; P.size[i] = size; P.grav[i] = grav || 0; P.drag[i] = drag || 0; P.seed[i] = rand();
+}
+function surfaceBelow(x, yPrev, y) {
+  if (y >= FLOOR_Y && yPrev <= FLOOR_Y + 2) return FLOOR_Y;
+  for (const p of PLATFORMS) if (x >= p.x && x <= p.x + p.w && yPrev <= p.y && y >= p.y) return p.y;
+  return -1;
+}
+function updateParticles(dt) {
+  for (let i = 0; i < P.n; i++) {
+    P.life[i] -= dt;
+    const t = P.type[i];
+    let dead = P.life[i] <= 0;
+    if (!dead) {
+      const k = Math.exp(-P.drag[i] * dt);
+      P.vx[i] *= k; P.vy[i] = P.vy[i] * k + P.grav[i] * dt;
+      if (t === EMBER) P.vx[i] += Math.sin(P.life[i] * 20 + P.seed[i] * 6) * 300 * dt;
+      if (t === SMOKE) P.size[i] += dt * 10;
+      const yPrev = P.y[i];
+      P.x[i] += P.vx[i] * dt; P.y[i] += P.vy[i] * dt;
+      if ((t === GOO || t === DRIP) && P.vy[i] > 0) {
+        const s = surfaceBelow(P.x[i], yPrev, P.y[i]);
+        if (s >= 0) {
+          dead = true;
+          if (t === GOO) addDecal(P.x[i], s, P.size[i]);
+          else { spawn(DRIP, P.x[i], s - 1, rr(-40, 40), rr(-90, -40), 0.25, 1, 900, 0); }
+        }
+      }
+      if (t === GOO && (P.x[i] < WALL || P.x[i] > LEVEL_W - WALL)) { P.vx[i] *= -0.3; P.x[i] = clamp(P.x[i], WALL, LEVEL_W - WALL); }
+    }
+    if (dead) {
+      const j = --P.n;
+      P.type[i] = P.type[j]; P.x[i] = P.x[j]; P.y[i] = P.y[j]; P.vx[i] = P.vx[j]; P.vy[i] = P.vy[j];
+      P.life[i] = P.life[j]; P.max[i] = P.max[j]; P.size[i] = P.size[j]; P.grav[i] = P.grav[j]; P.drag[i] = P.drag[j]; P.seed[i] = P.seed[j];
+      i--;
+    }
+  }
+}
+const COL = {
+  smoke: ['#2a2629', '#3a3538', '#4a4448'],
+  ember: ['#c8381a', '#ff7a1a', '#ffc23d', '#fff3b0'],
+  flame: ['#5a1d12', '#c8381a', '#ff7a1a', '#ffc23d', '#fff3b0'],
+  goo: ['#5f8a14', '#8cbf23', '#b6e23a'],
+  dust: ['#3e3840', '#4f4851', '#5f5761'],
+  drip: '#6f8a26',
+};
+function drawParticles(additive) {
+  for (let i = 0; i < P.n; i++) {
+    const t = P.type[i], f = P.life[i] / P.max[i];
+    if ((t === EMBER || t === FLAME) !== additive) continue;
+    let s = P.size[i], col;
+    switch (t) {
+      case SMOKE: g.globalAlpha = 0.55 * f; col = COL.smoke[(P.seed[i] * 3) | 0]; break;
+      case EMBER: col = COL.ember[Math.min(3, (f * 4) | 0)]; if (P.seed[i] > 0.5 && ((P.life[i] * 30) | 0) % 3 === 0) continue; break;
+      case FLAME: col = COL.flame[Math.min(4, (f * 5) | 0)]; s = Math.max(1, s * (0.4 + 0.6 * f)); break;
+      case GOO: col = COL.goo[(P.seed[i] * 3) | 0]; break;
+      case DUST: g.globalAlpha = 0.7 * f; col = COL.dust[(P.seed[i] * 3) | 0]; s = s * (1.6 - f * 0.6); break;
+      default: col = COL.drip;
+    }
+    s = Math.max(1, Math.round(s));
+    g.fillStyle = col;
+    g.fillRect(Math.round(P.x[i] - s / 2), Math.round(P.y[i] - s / 2), s, t === DRIP ? s + 1 : s);
+    g.globalAlpha = 1;
+  }
+}
+
+// ---------------------------------------------------------------- decals (pooled ring buffer, baked into a layer)
+const DC = T.decalCap;
+const D = { n: 0, head: 0, x: new Float32Array(DC), y: new Float32Array(DC), w: new Uint8Array(DC), c: new Uint8Array(DC), dirtyAll: false, pending: [] };
+const DECAL_COL = ['#4d6614', '#6f8f1e', '#8cbf23', '#3c5210'];
+function addDecal(x, y, size) {
+  const i = D.head;
+  if (D.n === DC) D.dirtyAll = true; else D.n++;
+  D.head = (D.head + 1) % DC;
+  D.x[i] = x; D.y[i] = y; D.w[i] = clamp(Math.round(size * rr(1.2, 2.6)), 2, 12); D.c[i] = (rand() * 4) | 0;
+  if (!D.dirtyAll) D.pending.push(i);
+}
+function drawDecal(i) {
+  const w = D.w[i], x = Math.round(D.x[i] - w / 2), y = Math.round(D.y[i] + SLIME.sink + surfVis(D.y[i]));
+  dg.fillStyle = DECAL_COL[D.c[i]];
+  dg.fillRect(x, y - 1, w, 2);
+  if (w > 4) { dg.fillRect(x + 1, y - 2, w - 2, 1); dg.fillStyle = '#b6e23a'; dg.fillRect(x + 1, y - 2, 1, 1); }
+  if (w > 7 && D.c[i] === 1) dg.fillRect(x + (w >> 1), y, 1, 2 + (w >> 2));
+}
+function flushDecals() {
+  if (D.dirtyAll) {
+    dg.clearRect(0, 0, LEVEL_W, H);
+    for (let i = 0; i < D.n; i++) drawDecal(i);
+    D.dirtyAll = false; D.pending.length = 0;
+  } else if (D.pending.length) {
+    for (const i of D.pending) drawDecal(i);
+    D.pending.length = 0;
+  }
+}
+
+// ---------------------------------------------------------------- audio
+const Sfx = {
+  ctx: null, master: null, muted: false, noise: null, flameGain: null, flameFilter: null, sizzleGain: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended' && !document.hidden) this.ctx.resume(); return; }
+    if (!(navigator.userActivation && navigator.userActivation.hasBeenActive)) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const a = this.ctx = new AC();
+    const comp = a.createDynamicsCompressor();
+    comp.connect(a.destination);
+    this.master = a.createGain(); this.master.gain.value = this.muted ? 0 : 0.8; this.master.connect(comp);
+    const len = a.sampleRate * 2, nb = a.createBuffer(1, len, a.sampleRate), d = nb.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = rand() * 2 - 1;
+    this.noise = nb;
+    const fsrc = a.createBufferSource(); fsrc.buffer = nb; fsrc.loop = true;
+    this.flameFilter = a.createBiquadFilter(); this.flameFilter.type = 'lowpass'; this.flameFilter.frequency.value = 900; this.flameFilter.Q.value = 1.2;
+    const roar = a.createBiquadFilter(); roar.type = 'lowpass'; roar.frequency.value = 180;
+    this.flameGain = a.createGain(); this.flameGain.gain.value = 0;
+    fsrc.connect(this.flameFilter); this.flameFilter.connect(this.flameGain);
+    const roarGain = a.createGain(); roarGain.gain.value = 2.2; fsrc.connect(roar); roar.connect(roarGain); roarGain.connect(this.flameGain);
+    this.flameGain.connect(this.master); fsrc.start();
+    const ssrc = a.createBufferSource(); ssrc.buffer = nb; ssrc.loop = true; ssrc.loopStart = 0.7;
+    const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3500;
+    const pk = a.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 7000; pk.gain.value = 8;
+    this.sizzleGain = a.createGain(); this.sizzleGain.gain.value = 0;
+    ssrc.connect(hp); hp.connect(pk); pk.connect(this.sizzleGain); this.sizzleGain.connect(this.master); ssrc.start();
+  },
+  setMuted(m) { this.muted = m; if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.8, this.ctx.currentTime, 0.02); },
+  update(firing, burning) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const t = this.ctx.currentTime;
+    this.flameGain.gain.setTargetAtTime(firing ? 0.32 + rand() * 0.08 : 0, t, firing ? 0.03 : 0.08);
+    this.flameFilter.frequency.setTargetAtTime(700 + rand() * 900, t, 0.02);
+    const crackle = rand() < 0.25 ? 1.8 : 1;
+    this.sizzleGain.gain.setTargetAtTime(burning > 0 ? Math.min(0.16, 0.07 * burning) * crackle : 0, t, 0.03);
+  },
+  noiseBurst(dur, type, f0, f1, vol, q) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const a = this.ctx, t = a.currentTime;
+    const s = a.createBufferSource(); s.buffer = this.noise; s.playbackRate.value = 0.8 + rand() * 0.4;
+    const f = a.createBiquadFilter(); f.type = type; f.Q.value = q || 1;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const gn = a.createGain(); gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    s.connect(f); f.connect(gn); gn.connect(this.master);
+    s.start(t, rand() * 1.5); s.stop(t + dur + 0.05);
+  },
+  tone(type, f0, f1, dur, vol) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const a = this.ctx, t = a.currentTime;
+    const o = a.createOscillator(); o.type = type;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const gn = a.createGain(); gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(gn); gn.connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+    return o;
+  },
+  jump() { this.tone('sine', 150, 70, 0.12, 0.5); this.noiseBurst(0.08, 'lowpass', 900, 200, 0.25); },
+  land(k) { this.tone('sine', 100, 38, 0.16, 0.35 + 0.4 * k); this.noiseBurst(0.12, 'lowpass', 600, 120, 0.2 + 0.3 * k); },
+  step() { this.noiseBurst(0.05, 'lowpass', 500, 150, 0.1); },
+  ignite() { this.noiseBurst(0.35, 'highpass', 2500, 7000, 0.35); },
+  splat() {
+    this.noiseBurst(0.45, 'lowpass', 1600, 120, 0.9, 4);
+    this.tone('sine', 140, 35, 0.4, 0.8);
+    setTimeout(() => this.noiseBurst(0.25, 'bandpass', 900, 300, 0.5, 6), 70);
+  },
+  growl() {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const a = this.ctx, t = a.currentTime, dur = 0.65;
+    const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(85, t); o.frequency.linearRampToValueAtTime(55, t + dur);
+    const lfo = a.createOscillator(); lfo.frequency.value = 23; const lg2 = a.createGain(); lg2.gain.value = 18; lfo.connect(lg2); lg2.connect(o.frequency);
+    const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(250, t + dur); f.Q.value = 6;
+    const gn = a.createGain(); gn.gain.setValueAtTime(0.001, t); gn.gain.exponentialRampToValueAtTime(0.6, t + 0.06); gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(f); f.connect(gn); gn.connect(this.master);
+    o.start(t); lfo.start(t); o.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05);
+    this.noiseBurst(0.5, 'bandpass', 500, 200, 0.35, 3);
+  },
+  thud() {
+    this.tone('sine', 90, 28, 0.6, 1);
+    this.tone('triangle', 60, 30, 0.4, 0.5);
+    this.noiseBurst(0.5, 'lowpass', 900, 80, 0.9, 2);
+    setTimeout(() => this.noiseBurst(0.35, 'bandpass', 700, 250, 0.5, 5), 40);
+  },
+  warn() {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const o = this.tone('sawtooth', 70, 160, 0.55, 0.22);
+    if (o) o.detune.value = -20;
+    this.noiseBurst(0.5, 'bandpass', 300, 1400, 0.25, 4);
+  },
+  hit() { this.tone('square', 220, 60, 0.15, 0.25); this.noiseBurst(0.18, 'lowpass', 2000, 300, 0.5); },
+};
+
+// ---------------------------------------------------------------- input
+const keys = new Set();
+const input = { moveX: 0, jumpHeld: false, fire: false, jumpPressed: false, restartPressed: false };
+const KEYMAP = { KeyA: 1, KeyD: 1, ArrowLeft: 1, ArrowRight: 1, KeyW: 1, ArrowUp: 1, Space: 1, KeyJ: 1, KeyX: 1, Enter: 1, KeyM: 1, F1: 1, ArrowDown: 1 };
+addEventListener('keydown', (e) => {
+  if (KEYMAP[e.code]) e.preventDefault();
+  Sfx.init();
+  if (e.repeat) return;
+  keys.add(e.code);
+  if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') input.jumpPressed = true;
+  if (e.code === 'Enter') input.restartPressed = true;
+  if (e.code === 'KeyM') { Sfx.setMuted(!Sfx.muted); updateHud(); }
+  if (e.code === 'F1') game.debug = !game.debug;
+});
+addEventListener('keyup', (e) => { keys.delete(e.code); });
+addEventListener('pointerdown', () => Sfx.init());
+addEventListener('blur', () => keys.clear());
+// Polling reads the pads every frame; the events only refresh the HUD at once.
+addEventListener('gamepadconnected', () => { pad.id = '\u0000'; });
+addEventListener('gamepaddisconnected', () => { pad.id = '\u0000'; });
+
+const pad = { gp: null, id: '', standard: true, prev: [], rumbleT: 0 };
+const padPressed = (b) => !!b && (b.pressed || b.value > 0.5);
+function pollInput() {
+  let mx = 0;
+  if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
+  if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1;
+  let jumpHeld = keys.has('KeyW') || keys.has('ArrowUp') || keys.has('Space');
+  let fire = keys.has('KeyJ') || keys.has('KeyX');
+  let gp = null;
+  const list = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const p of list) if (p && p.connected !== false) { gp = p; break; }
+  pad.gp = gp;
+  const id = gp ? gp.id : '';
+  if (id !== pad.id) { pad.id = id; pad.standard = !gp || gp.mapping === 'standard'; pad.prev = []; updateHud(); }
+  if (gp) {
+    const b = gp.buttons, prev = pad.prev, now = Array.from(b, padPressed);
+    now[7] = !!b[7] && (b[7].value > 0.3 || b[7].pressed);
+    let ax = gp.axes[0] || 0;
+    if (Math.abs(ax) < 0.25) ax = 0;
+    if (now[14]) ax = -1;
+    if (now[15]) ax = 1;
+    if (ax !== 0) mx = Math.sign(ax);
+    if (now[0]) jumpHeld = true;
+    if (now[2] || now[7]) fire = true;
+    if (now[0] && !prev[0]) input.jumpPressed = true;
+    if (now[9] && !prev[9]) input.restartPressed = true;
+    if (now.some((v, i) => v && !prev[i])) Sfx.init();
+    pad.prev = now;
+  }
+  input.moveX = mx; input.jumpHeld = jumpHeld; input.fire = fire;
+}
+function rumble(ms, weak, strong) {
+  const va = pad.gp && pad.gp.vibrationActuator;
+  if (!va || typeof va.playEffect !== 'function') return;
+  try {
+    const p = va.playEffect('dual-rumble', { startDelay: 0, duration: ms, weakMagnitude: weak, strongMagnitude: strong });
+    if (p && p.catch) p.catch(() => {});
+  } catch (e) { /* unsupported actuator */ }
+}
+
+// ---------------------------------------------------------------- HUD
+const hud = document.getElementById('hud');
+const overlay = document.getElementById('overlay');
+function updateHud() {
+  const padTxt = pad.id && pad.id !== '\u0000'
+    ? 'Controle: analógico ou direcional move, A pula, X ou RT atira, Menu recomeça' +
+      (pad.standard ? '' : ' (aviso: controle fora do modo padrão, os botões podem estar trocados)')
+    : 'Controle: aperte um botão do controle para o navegador detectá-lo';
+  hud.innerHTML = 'A/D ou ←/→ mover · W/↑/Espaço pular · J/X segurar fogo · Enter recomeçar · M som' +
+    (Sfx.muted ? ' (mudo)' : '') + ' · F1 debug\n<span class="hud-pad"></span>';
+  hud.querySelector('.hud-pad').textContent = padTxt;
+}
+
+// ---------------------------------------------------------------- game state
+const game = {
+  ready: false, debug: false, paused: false, time: 0,
+  trauma: 0, pendingTrauma: 0, hitStop: 0, slowT: 0, kills: 0, endT: -1, won: false,
+  cam: { x: 0, look: 0, kx: 0 }, shake: { x: 0, y: 0 },
+  stats: { fps: 0, frameMs: 0, workMs: 0, steps: 0 },
+};
+let EXT = null, SLIME = null;
+const player = { anim: newAnim() };
+const slimes = [];
+let fireRects = [], fireActive = false, nozzle = { x: 0, y: 0 };
+
+function walkInfo() {
+  const d = EXT.anims.walk;
+  const animSpeed = d.stride ? (d.stride * d.fps) / d.frames : 150;
+  const speed = d.stride ? (d.stride * (T.walkFps || d.fps)) / d.frames : 150;
+  return { animSpeed, speed };
+}
+
+function resetRound() {
+  Object.assign(player, {
+    x: 200, y: FLOOR_Y, vx: 0, vy: 0, facing: 1, grounded: true, coyote: 0, buffer: 0, cut: false,
+    attack: null, airT: 0, jumped: false, landing: false, hurtT: 0, flash: 0, sq: 0, recoil: 0,
+  });
+  play(player.anim, EXT, 'idle', null, true, true);
+  slimes.length = 0;
+  const spots = [
+    { x: 1250, facing: -1, surf: { y: FLOOR_Y, min: WALL, max: LEVEL_W - WALL } },
+    { x: 1950, facing: 1, surf: { y: FLOOR_Y, min: WALL, max: LEVEL_W - WALL } },
+    { x: PLATFORMS[3].x + PLATFORMS[3].w / 2, facing: -1, surf: { y: PLATFORMS[3].y, min: PLATFORMS[3].x, max: PLATFORMS[3].x + PLATFORMS[3].w } },
+  ];
+  spots.forEach((s, i) => {
+    const sl = {
+      id: i, x: s.x, y: s.surf.y, vx: 0, vy: 0, facing: s.facing, surf: s.surf, state: 'idle', stateT: rr(0.5, 2),
+      hp: 1, burnT: 0, burnedFor: 0, touchT: 0, flash: 0, sq: 0, hopT: 0, cool: rr(0.5, 1.5), heavyCool: rr(2, 4), hurtCool: 0, tremble: 0,
+      hitDone: false, emit: 0, anim: newAnim(), grounded: true,
+    };
+    play(sl.anim, SLIME, 'idle', null, true, true);
+    sl.anim.frame = (rand() * 8) | 0;
+    slimes.push(sl);
+  });
+  P.n = 0;
+  D.n = 0; D.head = 0; D.pending.length = 0; D.dirtyAll = true;
+  Object.assign(game, { trauma: 0, pendingTrauma: 0, hitStop: 0, slowT: 0, kills: 0, endT: -1, won: false });
+  game.cam.x = clamp(player.x - W / 2, 0, LEVEL_W - W); game.cam.look = 0; game.cam.kx = 0;
+  overlay.hidden = true;
+  initSpores();
+}
+
+function addTrauma(v) { game.trauma = Math.min(1, game.trauma + v); }
+
+function dust(x, y, n, spread, up) {
+  for (let i = 0; i < n; i++) spawn(DUST, x + rr(-spread, spread), y - rr(0, 3), rr(-1, 1) * 90, -rr(10, up), rr(0.25, 0.5), rr(2, 4), 120, 5);
+}
+
+// ---------------------------------------------------------------- player
+function playerBox() { return { x: player.x - 24, y: player.y - 150, w: 48, h: 148 }; }
+
+function updatePlayer(dt) {
+  const pl = player, a = pl.anim, wk = walkInfo();
+  pl.coyote = pl.grounded ? T.coyote : pl.coyote - dt;
+  pl.buffer = input.jumpPressed ? T.jumpBuffer : pl.buffer - dt;
+  input.jumpPressed = false;
+  const canAct = pl.hurtT <= 0;
+  if (!canAct) pl.hurtT -= dt;
+
+  if (!pl.attack && canAct && input.fire && pl.grounded) {
+    pl.attack = 'start'; pl.landing = false;
+    play(a, EXT, 'attack', phases(EXT, 'attack', 'start', (n) => [0, 2]), false, true);
+    game.cam.kx += pl.facing * 6;
+  }
+  if (pl.attack) {
+    pl.vx = Math.sign(pl.vx) * Math.max(0, Math.abs(pl.vx) - T.fireDecel * dt);
+    if (pl.attack === 'start' && a.done) {
+      if (input.fire) { pl.attack = 'sustain'; play(a, EXT, 'attack', phases(EXT, 'attack', 'sustain', (n) => [3, 8]), true, true); }
+      else { pl.attack = 'end'; play(a, EXT, 'attack', phases(EXT, 'attack', 'end', (n) => [9, n - 1]), false, true); }
+    } else if (pl.attack === 'sustain' && !input.fire) {
+      pl.attack = 'end'; play(a, EXT, 'attack', phases(EXT, 'attack', 'end', (n) => [9, n - 1]), false, true);
+    } else if (pl.attack === 'end' && a.done) {
+      pl.attack = null;
+    }
+    stepAnim(a, dt);
+  } else if (canAct) {
+    const target = input.moveX * wk.speed;
+    const acc = pl.grounded ? (input.moveX ? T.accel : T.decel) : T.airAccel;
+    if (pl.vx < target) pl.vx = Math.min(target, pl.vx + acc * dt); else pl.vx = Math.max(target, pl.vx - acc * dt);
+    if (input.moveX) pl.facing = input.moveX;
+    if (pl.buffer > 0 && pl.coyote > 0) {
+      pl.vy = -T.jumpV; pl.grounded = false; pl.coyote = 0; pl.buffer = 0; pl.cut = false; pl.airT = 0; pl.jumped = true; pl.landing = false;
+      pl.sq = -0.14; dust(pl.x, pl.y, 10, 18, 70); Sfx.jump(); sporeGust(pl.x, pl.y - 30, 110, 70);
+    }
+    if (!input.jumpHeld && pl.vy < 0 && !pl.cut) { pl.vy *= T.jumpCut; pl.cut = true; }
+  } else {
+    pl.vx *= Math.exp(-dt * 2.5);
+  }
+
+  pl.vy = Math.min(T.maxFall, pl.vy + T.gravity * (pl.vy > 0 ? T.fallMul : 1) * dt);
+  const prevY = pl.y, impact = pl.vy;
+  pl.x += pl.vx * dt; pl.y += pl.vy * dt;
+  if (pl.x < WALL + 24) { pl.x = WALL + 24; pl.vx = 0; }
+  if (pl.x > LEVEL_W - WALL - 24) { pl.x = LEVEL_W - WALL - 24; pl.vx = 0; }
+  let landed = false;
+  if (pl.vy >= 0) {
+    if (pl.y >= FLOOR_Y) { pl.y = FLOOR_Y; landed = true; }
+    else for (const p of PLATFORMS) if (pl.x >= p.x - 6 && pl.x <= p.x + p.w + 6 && prevY <= p.y + 0.5 && pl.y >= p.y) { pl.y = p.y; landed = true; break; }
+  }
+  if (landed) {
+    pl.vy = 0;
+    if (!pl.grounded) {
+      const k = clamp(impact / T.maxFall, 0, 1);
+      pl.sq = 0.06 + 0.16 * k; pl.landing = !pl.attack;
+      dust(pl.x, pl.y, 8 + ((k * 12) | 0), 22, 40 + 80 * k); Sfx.land(k);
+      addTrauma(0.08 + 0.2 * k);
+      if (pl.landing) play(a, EXT, 'jump', phases(EXT, 'jump', 'land', (n) => [n - 3, n - 1]), false, true);
+    }
+  }
+  if (!landed && pl.grounded) pl.jumped = false;
+  pl.grounded = landed;
+
+  if (!pl.attack) {
+    if (!pl.grounded) {
+      pl.airT += dt;
+      const tk = phases(EXT, 'jump', 'takeoff', () => [0, 1]), air = phases(EXT, 'jump', 'air', (n) => [2, n - 4]);
+      a.name = 'jump'; a.row = EXT.anims.jump.row; a.done = true;
+      if (pl.jumped && pl.airT < T.takeoffMax) {
+        a.frame = Math.min(tk[0] + ((pl.airT / T.takeoffMax) * 2) | 0, Math.min(tk[1], tk[0] + 1));
+      } else {
+        const u = clamp((pl.vy + T.jumpV * 0.9) / (T.jumpV * 1.8), 0, 1);
+        a.frame = air[0] + Math.round(u * (air[1] - air[0]));
+      }
+    } else if (pl.landing && !(input.moveX && a.frame > a.from)) {
+      stepAnim(a, dt);
+      if (a.done) pl.landing = false;
+    } else if (Math.abs(pl.vx) > 15) {
+      pl.landing = false;
+      play(a, EXT, 'walk', null, true, false);
+      if (stepAnim(a, dt, Math.abs(pl.vx) / wk.animSpeed)) {
+        const half = Math.max(1, (EXT.anims.walk.frames / 2) | 0);
+        if (a.frame % half === 0) { dust(pl.x - pl.facing * 6, pl.y, 3, 6, 30); Sfx.step(); }
+      }
+    } else {
+      pl.landing = false;
+      play(a, EXT, 'idle', null, true, false);
+      stepAnim(a, dt);
+    }
+  }
+  pl.sq *= Math.exp(-dt * 14);
+  if (pl.flash > 0) pl.flash -= dt;
+}
+
+function computeFire() {
+  fireActive = false; fireRects.length = 0;
+  const pl = player;
+  if (!pl.attack || pl.anim.name !== 'attack') return;
+  const fxl = EXT.anims.attack.fx, fx = fxl && fxl[pl.anim.frame];
+  if (!fx) return;
+  const e = EXT.effects[fx.effect];
+  if (!e) return;
+  fireActive = true;
+  const px = pl.x - pl.facing * pl.recoil, f = pl.facing;
+  const ox = -EXT.pivot.x + fx.x - e.anchor.x, oy = pl.y - EXT.pivot.y + fx.y - e.anchor.y;
+  nozzle.x = px + f * (-EXT.pivot.x + fx.x); nozzle.y = pl.y - EXT.pivot.y + fx.y;
+  for (const r of e.rects[fx.frame] || []) {
+    const u = ox + r[0];
+    fireRects.push({ x: f > 0 ? px + u : px - u - r[2], y: oy + r[1], w: r[2], h: r[3] });
+  }
+}
+
+// ---------------------------------------------------------------- slimes
+function slimeBox(s) { return { x: s.x - T.slimeBodyW / 2, y: s.y - T.slimeBodyH, w: T.slimeBodyW, h: T.slimeBodyH }; }
+const slimeCrawlSpeed = () => { const d = SLIME.anims.crawl; return (d.stride || 12) * d.fps / d.frames; };
+const SPH = {};
+function slimePhases() {
+  const ph = (name, key, fb) => phases(SLIME, name, key, fb);
+  SPH.windup = ph('attack', 'windup', () => [0, 3]);
+  SPH.strike = ph('attack', 'strike', () => [4, 7]);
+  SPH.hWindup = ph('heavy', 'windup', () => [0, 7]);
+  SPH.hAir = ph('heavy', 'air', () => [8, 10]);
+  SPH.hImpact = ph('heavy', 'impact', () => [11, 13]);
+  SPH.remains = ph('death', 'remains', (n) => [n - 1, n - 1]);
+  SPH.hasHurt = !!SLIME.anims.hurt;
+}
+const inRange = (f, r) => f >= r[0] && f <= r[1];
+
+function knockPlayer(dir, kx, ky, trauma, stop) {
+  const pl = player;
+  pl.attack = null; pl.landing = false;
+  pl.vx = dir * kx; pl.vy = -ky; pl.grounded = false; pl.jumped = false; pl.airT = 1;
+  pl.hurtT = 0.4; pl.flash = 0.12; pl.sq = 0.15;
+  addTrauma(trauma); game.hitStop = Math.max(game.hitStop, stop);
+  game.cam.kx += dir * 10;
+}
+
+function killSlime(s) {
+  s.state = 'dying'; s.burnT = Math.max(s.burnT, 1.2); s.vx *= 0.4;
+  play(s.anim, SLIME, 'death', null, false, true);
+  game.hitStop = T.hitStop; game.pendingTrauma = 0.9;
+  const cx = s.x, cy = s.y - 45;
+  for (let i = 0; i < 70; i++) spawn(GOO, cx + rr(-40, 40), cy + rr(-25, 25), rr(-420, 420), rr(-560, -120), rr(1.2, 2.2), rr(2, 5), 1500, 0.4);
+  for (let i = 0; i < 30; i++) spawn(EMBER, cx + rr(-30, 30), cy, rr(-300, 300), rr(-400, -80), rr(0.5, 1.2), rr(1, 3), 300, 1.5);
+  for (let i = 0; i < 14; i++) spawn(SMOKE, cx + rr(-40, 40), cy + rr(-20, 10), rr(-40, 40), rr(-80, -20), rr(1.2, 2), rr(6, 12), -20, 1);
+  Sfx.splat(); rumble(450, 1, 1); sporeGust(s.x, s.y - 50, 320, 260);
+  game.kills++;
+  if (game.kills >= slimes.length) { game.slowT = T.slowMoTime; game.endT = 2.4; }
+}
+
+function heavyImpact(s) {
+  const pl = player, dx = pl.x - s.x;
+  addTrauma(0.75); rumble(380, 1, 0.9); Sfx.thud(); sporeGust(s.x, sb(s) - 30, 360, 300);
+  for (const dir of [-1, 1]) {
+    for (let i = 0; i < 26; i++) spawn(GOO, s.x + dir * rr(20, 70), sb(s) - rr(2, 12), dir * rr(150, 520), -rr(60, 320), rr(0.8, 1.6), rr(2, 5), 1500, 0.6);
+    for (let i = 0; i < 10; i++) spawn(DUST, s.x + dir * rr(30, 100), s.y - 2, dir * rr(120, 320), -rr(10, 60), rr(0.3, 0.6), rr(3, 6), 100, 4);
+  }
+  for (let i = 0; i < 10; i++) addDecal(s.x + rr(-110, 110), s.y, rr(2, 5));
+  if (Math.abs(dx) < T.shockRange && Math.abs(pl.y - s.y) < 40 && pl.grounded) {
+    knockPlayer(Math.sign(dx) || s.facing, T.knockX * 0.9, T.knockY * 0.8, 0.3, 0.05);
+    rumble(300, 1, 1);
+  }
+}
+
+function setSlimeState(s, st, anim, loop) {
+  s.state = st;
+  play(s.anim, SLIME, anim, null, loop, true);
+}
+
+function updateSlime(s, dt) {
+  const pl = player, crawl = slimeCrawlSpeed(), a = s.anim;
+  s.flash = Math.max(0, s.flash - dt); s.touchT = Math.max(0, s.touchT - dt);
+  s.hurtCool -= dt; s.cool -= dt; s.heavyCool -= dt;
+  s.sq *= Math.exp(-dt * 10);
+  s.tremble = 0;
+  const burning = s.burnT > 0;
+  if (burning) { s.burnT -= dt; s.burnedFor += dt; } else s.burnedFor = 0;
+
+  if (s.state === 'dead' || s.state === 'dying') {
+    if (s.state === 'dying' && s.grounded) stepAnim(a, dt);
+    if (s.state === 'dying' && a.done) { s.state = 'dead'; a.frame = SPH.remains[0]; }
+    if (s.grounded) {
+      s.emit += dt;
+      if (s.emit > 0.12) {
+        s.emit = 0;
+        spawn(SMOKE, s.x + rr(-35, 35), sb(s) - rr(4, 16), rr(-10, 10), rr(-45, -20), rr(1.4, 2.4), rr(3, 6), -10, 0.6);
+        if (rand() < 0.6) spawn(EMBER, s.x + rr(-40, 40), sb(s) - rr(2, 10), rr(-20, 20), rr(-90, -30), rr(0.4, 1), 1, -40, 1);
+      }
+    }
+    slimePhysics(s, dt, 0);
+    if (s.burnT > 0) burnFx(s, dt, 0.6);
+    return;
+  }
+
+  const dx = pl.x - s.x, dist = Math.abs(dx), sameLevel = Math.abs(pl.y - s.y) < 50;
+  let speed = 0;
+
+  switch (s.state) {
+    case 'attack': {
+      stepAnim(a, dt);
+      if (inRange(a.frame, SPH.strike)) {
+        speed = 120;
+        if (!s.hitDone) {
+          const reach = { x: s.facing > 0 ? s.x : s.x - 160, y: s.y - 110, w: 160, h: 110 };
+          if (overlaps(reach, playerBox())) {
+            s.hitDone = true;
+            knockPlayer(s.facing, T.knockX, T.knockY, 0.55, 0.07);
+            rumble(220, 0.6, 0.5); Sfx.hit();
+            for (let i = 0; i < 16; i++) spawn(GOO, pl.x + rr(-15, 15), pl.y - rr(60, 110), s.facing * rr(60, 300), rr(-300, -60), rr(0.8, 1.5), rr(2, 4), 1500, 0.4);
+          }
+        }
+      }
+      if (a.done) { s.cool = T.lightCooldown; toIdleOrPanic(s); }
+      break;
+    }
+    case 'heavy': {
+      if (inRange(a.frame, SPH.hWindup)) {
+        s.tremble = 2;
+        if (stepAnim(a, dt) && a.frame === SPH.hAir[0]) {
+          const air = 2 * T.heavyJumpV / T.gravity;
+          const target = clamp(dx - Math.sign(dx) * 70, -T.heavyReach, T.heavyReach);
+          s.vx = target / air; s.vy = -T.heavyJumpV; s.grounded = false; s.sq = -0.2;
+          s.facing = Math.sign(dx) || s.facing;
+          dust(s.x, sb(s), 10, 50, 60); Sfx.jump();
+        }
+      } else if (inRange(a.frame, SPH.hAir)) {
+        if (a.frame < SPH.hAir[1]) stepAnim(a, dt);
+        if (s.grounded) {
+          s.vx = 0; s.sq = 0.25;
+          play(a, SLIME, 'heavy', [SPH.hImpact[0], SLIME.anims.heavy.frames - 1], false, true);
+          heavyImpact(s);
+        }
+      } else {
+        stepAnim(a, dt);
+        if (a.done) { s.heavyCool = burning ? T.heavyCooldown * 0.55 : T.heavyCooldown; s.cool = 0.8; toIdleOrPanic(s); }
+      }
+      break;
+    }
+    case 'hurt': {
+      stepAnim(a, dt);
+      speed = -30;
+      if (a.done) toIdleOrPanic(s);
+      break;
+    }
+    default: {
+      // idle, crawl and panic can start an attack
+      const canAttack = s.grounded && sameLevel;
+      const rage = burning && s.burnedFor > 1;
+      if (canAttack && s.heavyCool <= 0 && ((dist > 180 && dist < 440 && rand() < (burning ? 2.5 : 0.7) * dt) || (rage && dist < 480 && rand() < 3 * dt))) {
+        s.facing = Math.sign(dx) || s.facing;
+        setSlimeState(s, 'heavy', 'heavy', false);
+        Sfx.warn(); s.flash = 0.06;
+        break;
+      }
+      if (canAttack && s.cool <= 0 && Math.sign(dx) === s.facing && dist > 30 && dist < 170 && rand() < (burning ? 4 : 3) * dt) {
+        s.hitDone = false;
+        setSlimeState(s, 'attack', 'attack', false);
+        Sfx.growl();
+        break;
+      }
+      if (burning) {
+        if (s.state !== 'panic') setSlimeState(s, 'panic', 'crawl', true);
+        let dir = Math.sign(s.x - pl.x) || s.facing;
+        if ((dir < 0 && s.x - T.slimeHalfW <= s.surf.min + 4) || (dir > 0 && s.x + T.slimeHalfW >= s.surf.max - 4)) dir = -dir;
+        s.facing = dir; speed = crawl * T.panicMul;
+        stepAnim(a, dt, T.panicMul);
+        s.hopT -= dt;
+        if (s.hopT <= 0 && s.grounded) { s.vy = -rr(170, 290); s.grounded = false; s.hopT = rr(0.35, 0.8); s.sq = -0.18; }
+        break;
+      }
+      if (s.state === 'panic') setSlimeState(s, 'idle', 'idle', true);
+      s.stateT -= dt;
+      if (Math.sign(dx) !== s.facing && dist < 260 && sameLevel && rand() < 0.6 * dt) { s.facing = -s.facing; s.sq = 0.08; }
+      if (s.state === 'idle') {
+        stepAnim(a, dt);
+        if (s.stateT <= 0) { setSlimeState(s, 'crawl', 'crawl', true); s.stateT = rr(1.5, 4); if (rand() < 0.35) s.facing = -s.facing; }
+      } else {
+        speed = crawl * T.slimeSpeedMul;
+        stepAnim(a, dt, T.slimeSpeedMul);
+        if (rand() < 0.12 * dt) s.facing = -s.facing;
+        if (s.stateT <= 0) { setSlimeState(s, 'idle', 'idle', true); s.stateT = rr(0.8, 2.2); }
+      }
+    }
+  }
+  slimePhysics(s, dt, speed);
+
+  // fire contact
+  if (fireActive) {
+    const box = slimeBox(s);
+    let hit = false;
+    for (const r of fireRects) if (overlaps(box, r)) { hit = true; break; }
+    if (hit) {
+      if (s.burnT <= 0) { Sfx.ignite(); addTrauma(0.12); }
+      s.burnT = T.burnTime; s.touchT = 0.1;
+      const committed = (s.state === 'attack' && inRange(a.frame, SPH.strike)) || (s.state === 'heavy' && !inRange(a.frame, SPH.hWindup));
+      if (s.hurtCool <= 0 && !committed && SPH.hasHurt && s.grounded) {
+        setSlimeState(s, 'hurt', 'hurt', false);
+        s.hurtCool = T.hurtCooldown; s.flash = 0.06; s.sq = 0.12;
+        s.facing = Math.sign(pl.x - s.x) || s.facing;
+      }
+      s.hp -= T.fireDps * dt;
+      if (s.hp <= 0) { killSlime(s); return; }
+    }
+  }
+  if (s.burnT > 0) burnFx(s, dt, 1);
+}
+
+function toIdleOrPanic(s) {
+  if (s.burnT > 0) setSlimeState(s, 'panic', 'crawl', true);
+  else { setSlimeState(s, 'idle', 'idle', true); s.stateT = rr(0.4, 1.2); }
+}
+
+function slimePhysics(s, dt, speed) {
+  if (s.grounded) s.x += s.facing * speed * dt;
+  else s.x += s.vx * dt;
+  const lo = s.surf.min + T.slimeHalfW, hi = s.surf.max - T.slimeHalfW;
+  if (s.x < lo) { s.x = lo; s.vx = 0; if (s.state === 'crawl') s.facing = 1; }
+  if (s.x > hi) { s.x = hi; s.vx = 0; if (s.state === 'crawl') s.facing = -1; }
+  if (!s.grounded || s.vy !== 0) {
+    s.vy += T.gravity * dt; s.y += s.vy * dt;
+    if (s.y >= s.surf.y) {
+      s.y = s.surf.y;
+      if (s.vy > 120 && s.state !== 'heavy') { s.sq = 0.16; dust(s.x, sb(s), 4, 40, 30); }
+      s.vy = 0; s.grounded = true;
+    }
+  }
+}
+
+function burnFx(s, dt, k) {
+  const n = rand() < 0.5 ? 1 : 2;
+  for (let i = 0; i < n * k; i++) spawn(FLAME, s.x + rr(-50, 50), sb(s) - rr(10, 80), rr(-30, 30), rr(-160, -60), rr(0.25, 0.6), rr(3, 7), -100, 1);
+  if (rand() < 0.35 * k) spawn(SMOKE, s.x + rr(-40, 40), sb(s) - rr(50, 100), rr(-20, 20), rr(-70, -30), rr(0.8, 1.6), rr(4, 8), -20, 0.8);
+  if (rand() < 0.4 * k) spawn(EMBER, s.x + rr(-45, 45), sb(s) - rr(20, 80), rr(-60, 60), rr(-200, -80), rr(0.4, 1), rr(1, 2), 100, 1);
+}
+
+// ---------------------------------------------------------------- spores (fixed pool, screen space, wrapped per parallax layer)
+const SPORE_DENSITY = 220;
+const SPORE_YMIN = 8, SPORE_GLOW = 0.06, SPORE_FRONT = 0.12;
+const SPORE_LAYERS = [
+  { par: 0.15, share: 0.36, sink: [1.5, 4], sway: [1.5, 4], big: 0, cols: ['#3f4c1d', '#4b4e37', '#45443b'] },
+  { par: 0.45, share: 0.34, sink: [3, 8], sway: [3, 7], big: 0.12, cols: ['#718c28', '#8f9759', '#82806f'] },
+  { par: 1.0, share: 0.30, sink: [6, 14], sway: [5, 11], big: 0.4, cols: ['#a9cd3d', '#d0da90', '#c4bfa8'] },
+];
+const SP = {
+  n: SPORE_DENSITY, camX: 0,
+  layer: new Uint8Array(SPORE_DENSITY), x: new Float32Array(SPORE_DENSITY), y: new Float32Array(SPORE_DENSITY),
+  vx: new Float32Array(SPORE_DENSITY), vy: new Float32Array(SPORE_DENSITY), ph: new Float32Array(SPORE_DENSITY),
+  freq: new Float32Array(SPORE_DENSITY), amp: new Float32Array(SPORE_DENSITY), sink: new Float32Array(SPORE_DENSITY),
+  col: new Uint8Array(SPORE_DENSITY), size: new Uint8Array(SPORE_DENSITY), glow: new Uint8Array(SPORE_DENSITY),
+  front: new Uint8Array(SPORE_DENSITY), flash: new Float32Array(SPORE_DENSITY),
+};
+const sporeYMax = () => FLOOR_Y - 8;
+function sporeSeed(i, x, y) {
+  const L = SPORE_LAYERS[SP.layer[i]];
+  SP.x[i] = x; SP.y[i] = y; SP.vx[i] = 0; SP.vy[i] = 0; SP.flash[i] = 0;
+  SP.ph[i] = rand() * 6.283; SP.freq[i] = rr(0.25, 0.9); SP.amp[i] = rr(L.sway[0], L.sway[1]);
+  SP.sink[i] = rr(L.sink[0], L.sink[1]); SP.col[i] = (rand() * 3) | 0;
+  SP.size[i] = rand() < L.big ? 2 : 1;
+  SP.glow[i] = SP.layer[i] > 0 && rand() < SPORE_GLOW ? 1 : 0;
+  SP.front[i] = SP.layer[i] === 2 && rand() < SPORE_FRONT ? 1 : 0;
+}
+function initSpores() {
+  let acc = 0, li = 0;
+  for (let i = 0; i < SP.n; i++) {
+    while (li < 2 && i >= (acc + SPORE_LAYERS[li].share) * SP.n) { acc += SPORE_LAYERS[li].share; li++; }
+    SP.layer[i] = li;
+    sporeSeed(i, rand() * W, rr(SPORE_YMIN, sporeYMax()));
+  }
+  SP.camX = game.cam.x;
+}
+function respawnSpore(i, camX) {
+  let x = rand() * W, y = rr(SPORE_YMIN, sporeYMax());
+  if (fireActive && Math.abs(x - (nozzle.x - camX)) < 260) y = SPORE_YMIN + rand() * 20;
+  sporeSeed(i, x, y);
+}
+function sporeGust(wx, wy, radius, strength) {
+  const sx = wx - game.cam.x, r2 = radius * radius;
+  for (let i = 0; i < SP.n; i++) {
+    const dx = SP.x[i] - sx, dy = SP.y[i] - wy, d2 = dx * dx + dy * dy;
+    if (d2 > r2 || d2 < 1) continue;
+    const d = Math.sqrt(d2), k = (1 - d / radius) * strength * (0.6 + 0.4 * SPORE_LAYERS[SP.layer[i]].par);
+    SP.vx[i] += (dx / d) * k; SP.vy[i] += (dy / d) * k;
+  }
+}
+function updateSpores(dt, camX, t) {
+  const dCam = camX - SP.camX; SP.camX = camX;
+  const ymax = sporeYMax(), damp = Math.exp(-dt * 1.8);
+  const pl = player, psx = pl.x - camX, psy = pl.y - 80, stir = Math.abs(pl.vx) > 30;
+  for (let i = 0; i < SP.n; i++) {
+    const L = SPORE_LAYERS[SP.layer[i]];
+    SP.x[i] -= dCam * L.par;
+    if (SP.flash[i] > 0) {
+      SP.flash[i] -= dt;
+      if (SP.flash[i] <= 0) {
+        spawn(EMBER, SP.x[i] + camX, SP.y[i], rr(-12, 12), rr(-70, -35), rr(0.5, 0.9), 1, -40, 1);
+        respawnSpore(i, camX);
+      }
+      continue;
+    }
+    const ph = SP.ph[i], f = SP.freq[i];
+    const sway = (Math.sin(t * f + ph) + 0.55 * Math.sin(t * f * 2.31 + ph * 1.7)) * SP.amp[i];
+    const bob = Math.sin(t * f * 0.73 + ph * 2.1) * SP.sink[i] * 0.6;
+    if (stir && SP.layer[i] === 2) {
+      const dx = SP.x[i] - psx, dy = SP.y[i] - psy;
+      if (dx * dx + dy * dy < 4900) { SP.vx[i] += pl.vx * 0.9 * dt; SP.vy[i] -= 12 * dt; }
+    }
+    SP.vx[i] *= damp; SP.vy[i] *= damp;
+    SP.x[i] += (sway + SP.vx[i]) * dt;
+    SP.y[i] += (SP.sink[i] + bob + SP.vy[i]) * dt;
+    if (SP.x[i] < -4) SP.x[i] += W + 8; else if (SP.x[i] > W + 4) SP.x[i] -= W + 8;
+    if (SP.y[i] > ymax) { SP.y[i] = SPORE_YMIN; SP.x[i] = rand() * W; }
+    else if (SP.y[i] < SPORE_YMIN) SP.y[i] = SPORE_YMIN + 1;
+  }
+  if (fireActive) {
+    const f = player.facing;
+    for (const r of fireRects) {
+      const rx = r.x - camX, pad = 26;
+      for (let i = 0; i < SP.n; i++) {
+        if (SP.flash[i] > 0) continue;
+        const x = SP.x[i], y = SP.y[i];
+        if (x < rx - pad || x > rx + r.w + pad || y < r.y - pad || y > r.y + r.h + pad) continue;
+        if (x >= rx && x <= rx + r.w && y >= r.y && y <= r.y + r.h && SP.layer[i] > 0) { SP.flash[i] = 0.12; continue; }
+        SP.vx[i] += f * 320 * dt; SP.vy[i] -= 160 * dt;
+      }
+    }
+  }
+}
+function drawSpores(layer, front, camY) {
+  const L = SPORE_LAYERS[layer], oy = layer === 2 ? camY : 0;
+  for (let i = 0; i < SP.n; i++) {
+    if (SP.layer[i] !== layer || SP.front[i] !== front || SP.flash[i] > 0) continue;
+    g.fillStyle = L.cols[SP.col[i]];
+    const s = SP.size[i];
+    g.fillRect(Math.round(SP.x[i]), Math.round(SP.y[i] - oy), s, s);
+  }
+}
+function drawSporeGlow(camY, t) {
+  for (let i = 0; i < SP.n; i++) {
+    const x = Math.round(SP.x[i]), y = Math.round(SP.y[i] - (SP.layer[i] === 2 ? camY : 0));
+    if (SP.flash[i] > 0) {
+      g.globalAlpha = 1; g.fillStyle = SP.flash[i] > 0.06 ? '#ffe08a' : '#ff8a2a';
+      g.fillRect(x - 1, y - 1, 3, 3);
+    } else if (SP.glow[i]) {
+      g.globalAlpha = 0.3 + 0.3 * Math.sin(t * 1.4 + SP.ph[i]);
+      g.fillStyle = '#b6e23a';
+      g.fillRect(x, y, SP.size[i], SP.size[i]);
+    }
+  }
+  g.globalAlpha = 1;
+}
+// Readability pass after the dark overlay: dim for spores in the dark, bright and warm near fire lights.
+// Spores behind a character box are skipped, so the characters keep occluding them.
+const SPORE_POST_ALPHA = [0.18, 0.32, 0.5];
+const occluders = [];
+function drawSporesPost(camX, camY) {
+  occluders.length = 0;
+  const pb = playerBox();
+  occluders.push(pb.x - camX, pb.y - camY, pb.w, pb.h);
+  for (const s of slimes) { const b = slimeBox(s); occluders.push(b.x - camX, b.y - camY + SLIME.sink, b.w, b.h); }
+  for (let i = 0; i < SP.n; i++) {
+    if (SP.flash[i] > 0) continue;
+    const layer = SP.layer[i], x = Math.round(SP.x[i]), y = Math.round(SP.y[i] - (layer === 2 ? camY : 0));
+    if (!SP.front[i] && layer === 2) {
+      let hidden = false;
+      for (let k = 0; k < occluders.length; k += 4) {
+        if (x >= occluders[k] && x < occluders[k] + occluders[k + 2] && y >= occluders[k + 1] && y < occluders[k + 1] + occluders[k + 3]) { hidden = true; break; }
+      }
+      if (hidden) continue;
+    }
+    let lit = 0;
+    for (let k = 0; k < lights.length; k += 5) {
+      if (lights[k + 4] !== 'fire') continue;
+      const dx = lights[k] - camX - x, dy = lights[k + 1] - camY - y, r = lights[k + 2] * 0.7;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < r * r) lit = Math.max(lit, 1 - Math.sqrt(d2) / r);
+    }
+    const a = Math.min(1, SPORE_POST_ALPHA[layer] + (SP.front[i] ? 0.3 : 0) + lit * 0.8);
+    if (a < 0.05) continue;
+    g.globalAlpha = a;
+    g.fillStyle = lit > 0.35 ? '#ffd890' : SPORE_LAYERS[layer].cols[SP.col[i]];
+    const s = SP.size[i];
+    g.fillRect(x, y, s, s);
+  }
+  g.globalAlpha = 1;
+}
+
+function addSporeLights(camX, t) {
+  for (let i = 0; i < SP.n; i++) {
+    if (SP.glow[i] && SP.flash[i] <= 0) addLight(SP.x[i] + camX, SP.y[i], 22, 0.18 + 0.12 * Math.sin(t * 1.4 + SP.ph[i]), 'lime');
+    else if (SP.flash[i] > 0) addLight(SP.x[i] + camX, SP.y[i], 30, 0.6, 'fire');
+  }
+}
+
+// ---------------------------------------------------------------- update
+let fireRumbleT = 0, dripT = 0;
+function update(dt) {
+  game.time += dt;
+  updatePlayer(dt);
+  player.recoil = 0;
+  computeFire();
+  if (fireActive) {
+    player.recoil = 1 + (((game.time * 30) | 0) & 1);
+    computeFire();
+    const f = player.facing;
+    for (let i = 0; i < 3; i++) spawn(EMBER, nozzle.x + f * rr(0, 10), nozzle.y + rr(-4, 4), f * rr(220, 520), rr(-160, 40), rr(0.25, 0.7), rr(1, 2.5), 250, 2);
+    const tip = fireRects[fireRects.length - 1];
+    if (tip && rand() < 0.5) spawn(SMOKE, tip.x + tip.w / 2, tip.y + rr(0, tip.h / 2), f * rr(20, 60), rr(-60, -20), rr(0.6, 1.2), rr(4, 8), -30, 1);
+    if (tip && rand() < 0.6) spawn(FLAME, tip.x + rr(0, tip.w), tip.y + rr(0, tip.h), f * rr(30, 90), rr(-90, -30), rr(0.15, 0.35), rr(3, 6), -100, 2);
+    game.cam.kx += (f * 5 - game.cam.kx) * 0.3 + rr(-0.6, 0.6);
+    game.trauma = Math.max(game.trauma, 0.12);
+    fireRumbleT -= dt;
+    if (fireRumbleT <= 0) { rumble(90, 0.3, 0.06); fireRumbleT = 0.12; }
+  }
+  for (const s of slimes) updateSlime(s, dt);
+  dripT -= dt;
+  if (dripT <= 0 && DRIP_SPOTS.length) { const d = DRIP_SPOTS[(rand() * DRIP_SPOTS.length) | 0]; spawn(DRIP, d.x + rr(-2, 2), d.y, 0, 20, 3, 2, 900, 0); dripT = rr(0.15, 0.6); }
+  updateParticles(dt);
+
+  const cam = game.cam;
+  cam.look += (player.facing * T.lookAhead - cam.look) * (1 - Math.exp(-dt * 2.5));
+  const target = clamp(player.x + cam.look - W / 2, 0, LEVEL_W - W);
+  cam.x += (target - cam.x) * (1 - Math.exp(-dt * T.camLerp));
+  cam.kx *= Math.exp(-dt * 10);
+  game.trauma = Math.max(0, game.trauma - T.traumaDecay * dt);
+  const sh = game.trauma * game.trauma * T.shakeMax;
+  game.shake.x = (rand() * 2 - 1) * sh + cam.kx;
+  game.shake.y = (rand() * 2 - 1) * sh * 0.7;
+  updateSpores(dt, cam.x, game.time);
+
+  if (game.endT > 0) { game.endT -= dt; if (game.endT <= 0) { game.won = true; overlay.hidden = false; } }
+}
+
+// ---------------------------------------------------------------- render
+function drawSprite(sheet, img, row, frame, x, y, flip, scx, scy) {
+  const { fw, fh, pivot } = sheet;
+  const w = Math.round(fw * scx), h = Math.round(fh * scy);
+  const dy = Math.round(y + sheet.sink - pivot.y * scy);
+  if (!flip) g.drawImage(img, frame * fw, row * fh, fw, fh, Math.round(x - pivot.x * scx), dy, w, h);
+  else {
+    g.save(); g.translate(Math.round(x), 0); g.scale(-1, 1);
+    g.drawImage(img, frame * fw, row * fh, fw, fh, Math.round(-pivot.x * scx), dy, w, h);
+    g.restore();
+  }
+}
+
+function drawSlime(s) {
+  const a = s.anim;
+  let x = s.x, y = s.y + surfVis(s.surf.y), scx = 1 + s.sq, scy = 1 - s.sq;
+  const burning = s.burnT > 0 && s.state !== 'dead';
+  if (s.tremble) { x += ((rand() * (2 * s.tremble + 1)) | 0) - s.tremble; y -= (rand() * 2) | 0; }
+  if (burning && s.state !== 'dying') {
+    const wob = Math.sin(game.time * 38 + s.id) * 0.06;
+    scx += wob; scy -= wob;
+    x += ((rand() * 5) | 0) - 2;
+  }
+  const flip = s.facing < 0;
+  drawSprite(SLIME, SLIME.img, a.row, a.frame, x, y, flip, scx, scy);
+  if (s.state === 'dead') return;
+  let ov = null, alpha = 0;
+  if (s.flash > 0) { ov = SLIME.white; alpha = 0.8; }
+  else if (s.tremble && ((game.time * 12) | 0) % 2 === 0) { ov = SLIME.white; alpha = 0.35; }
+  else if (burning) {
+    const ph = ((game.time * 16) | 0) % 3;
+    if (ph === 0) { ov = SLIME.white; alpha = s.touchT > 0 ? 0.45 : 0.3; }
+    else if (ph === 1) { ov = SLIME.orange; alpha = s.touchT > 0 ? 0.5 : 0.35; }
+  }
+  if (ov) { g.globalAlpha = alpha; drawSprite(SLIME, ov, a.row, a.frame, x, y, flip, scx, scy); g.globalAlpha = 1; }
+}
+
+function drawPlayer() {
+  const pl = player, a = pl.anim, flip = pl.facing < 0;
+  const x = pl.x - pl.facing * pl.recoil, scx = 1 + pl.sq * 0.7, scy = 1 - pl.sq;
+  const y = pl.y + (pl.grounded ? surfVis(pl.y) : 0);
+  drawSprite(EXT, EXT.img, a.row, a.frame, x, y, flip, scx, scy);
+  if (pl.flash > 0) { g.globalAlpha = 0.85; drawSprite(EXT, EXT.white, a.row, a.frame, x, y, flip, scx, scy); g.globalAlpha = 1; }
+}
+
+function drawFireEffect() {
+  if (!fireActive) return;
+  const pl = player, fx = EXT.anims.attack.fx[pl.anim.frame], e = EXT.effects[fx.effect];
+  const x = Math.round(pl.x - pl.facing * pl.recoil);
+  const sx = (fx.frame % e.cols) * e.fw, sy = ((fx.frame / e.cols) | 0) * e.fh;
+  const lx = -EXT.pivot.x + fx.x - e.anchor.x, ly = Math.round(pl.y - EXT.pivot.y + fx.y - e.anchor.y);
+  if (pl.facing > 0) g.drawImage(e.img, sx, sy, e.fw, e.fh, x + lx, ly, e.fw, e.fh);
+  else { g.save(); g.translate(x, 0); g.scale(-1, 1); g.drawImage(e.img, sx, sy, e.fw, e.fh, lx, ly, e.fw, e.fh); g.restore(); }
+}
+
+const lights = [];
+function addLight(x, y, r, i, glow) { lights.push(x, y, r, i, glow); }
+function renderLighting(camX, camY) {
+  lights.length = 0;
+  const flick = 0.85 + rand() * 0.15;
+  addLight(player.x, player.y - 90, 220, 0.5, null);
+  addSporeLights(camX, game.time);
+  if (fireActive) {
+    addLight(nozzle.x, nozzle.y, 220, 1 * flick, 'fire');
+    const mid = fireRects[Math.min(2, fireRects.length - 1)];
+    if (mid) addLight(mid.x + mid.w / 2, mid.y + mid.h / 2, 300, 0.95 * flick, 'fire');
+  }
+  for (const s of slimes) {
+    if (s.state === 'dead') addLight(s.x, sb(s) - 10, 90 + rand() * 10, 0.45 * flick, 'fire');
+    else if (s.burnT > 0) addLight(s.x, sb(s) - 50, 220, 0.8 * flick, 'fire');
+    else if (s.state !== 'dying') addLight(s.x, sb(s) - 40, 140, 0.35, 'lime');
+  }
+  lg.globalCompositeOperation = 'source-over';
+  lg.clearRect(0, 0, LW, LH);
+  lg.fillStyle = `rgba(4,3,10,${T.ambientAlpha})`;
+  lg.fillRect(0, 0, LW, LH);
+  lg.globalCompositeOperation = 'destination-out';
+  gg.clearRect(0, 0, LW, LH);
+  gg.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < lights.length; i += 5) {
+    const r = lights[i + 2] / LD, d = Math.round(r * 2);
+    const lx = Math.round((lights[i] - camX) / LD - r), ly = Math.round((lights[i + 1] - camY) / LD - r);
+    if (lx > LW || ly > LH || lx + d < 0 || ly + d < 0) continue;
+    lg.globalAlpha = lights[i + 3];
+    lg.drawImage(LIGHT_MASK, lx, ly, d, d);
+    const gl = lights[i + 4];
+    if (gl) { gg.globalAlpha = lights[i + 3]; gg.drawImage(GLOW[gl], lx, ly, d, d); }
+  }
+  lg.globalAlpha = 1; gg.globalAlpha = 1;
+  g.drawImage(lightCv, 0, 0, W, H);
+}
+
+function render() {
+  const camX = clamp(Math.round(game.cam.x + game.shake.x), 0, LEVEL_W - W);
+  const camY = Math.round(game.shake.y);
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  const fw2 = farCv.width, fo = Math.floor(camX * LA.far.parallax) % fw2, fy = H - farCv.height - camY;
+  g.drawImage(farCv, -fo, fy); if (fw2 - fo < W) g.drawImage(farCv, fw2 - fo, fy);
+  drawSpores(0, 0, camY);
+  const mw = midImg.width, mo = Math.floor(camX * LA.mid.parallax) % mw, my = FLOOR_Y - TOP_INSET + 4 - midImg.height - camY;
+  for (let mx = -mo; mx < W; mx += mw) g.drawImage(midImg, mx, my);
+  drawSpores(1, 0, camY);
+  g.drawImage(levelCv, camX, 0, W, H, 0, -camY, W, H);
+  flushDecals();
+  g.drawImage(decalCv, camX, 0, W, H, 0, -camY, W, H);
+  drawSpores(2, 0, camY);
+  g.save(); g.translate(-camX, -camY);
+  for (const s of slimes) if (s.state === 'dead') drawSlime(s);
+  for (const s of slimes) if (s.state !== 'dead') drawSlime(s);
+  drawPlayer();
+  drawParticles(false);
+  g.restore();
+  renderLighting(camX, camY);
+  drawSpores(2, 1, camY);
+  drawSporesPost(camX, camY);
+  g.save(); g.translate(-camX, -camY);
+  drawFireEffect();
+  g.globalCompositeOperation = 'lighter';
+  drawParticles(true);
+  g.restore();
+  g.drawImage(glowCv, 0, 0, W, H);
+  drawSporeGlow(camY, game.time);
+  g.globalCompositeOperation = 'source-over';
+  if (game.debug) drawDebug(camX, camY);
+  sctx.drawImage(buf, 0, 0, screen.width, screen.height);
+}
+
+function strokeBox(b, col) { g.strokeStyle = col; g.strokeRect(Math.round(b.x) + 0.5, Math.round(b.y) + 0.5, Math.round(b.w) - 1, Math.round(b.h) - 1); }
+function drawDebug(camX, camY) {
+  g.save(); g.translate(-camX, -camY); g.lineWidth = 1;
+  strokeBox(playerBox(), '#3cf');
+  g.fillStyle = '#3cf'; g.fillRect(Math.round(player.x) - 1, Math.round(player.y) - 1, 3, 3);
+  for (const r of fireRects) strokeBox(r, '#f33');
+  if (fireActive) { g.fillStyle = '#ff0'; g.fillRect(Math.round(nozzle.x) - 1, Math.round(nozzle.y) - 1, 3, 3); }
+  g.font = '10px monospace';
+  for (const s of slimes) {
+    strokeBox(slimeBox(s), s.burnT > 0 ? '#f80' : '#9f3');
+    g.fillStyle = '#fff';
+    g.fillText(`${s.state} hp:${Math.max(0, s.hp).toFixed(2)} burn:${Math.max(0, s.burnT).toFixed(1)}`, Math.round(s.x - 60), Math.round(s.y - 104));
+  }
+  for (const p of PLATFORMS) strokeBox({ x: p.x, y: p.y, w: p.w, h: PLAT_H }, '#888');
+  g.restore();
+  const st = game.stats;
+  g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(4, 4, 330, 56);
+  g.fillStyle = '#9f9'; g.font = '10px monospace';
+  g.fillText(`FPS ${st.fps.toFixed(0)}  frame ${st.frameMs.toFixed(1)} ms  work ${st.workMs.toFixed(2)} ms`, 10, 18);
+  g.fillText(`particles ${P.n}/${PC}  decals ${D.n}/${DC}  trauma ${game.trauma.toFixed(2)}`, 10, 30);
+  g.fillText(`spores ${SP.n} (density ${SPORE_DENSITY})`, 10, 54);
+  g.fillText(`player ${player.anim.name}:${player.anim.frame} ${player.attack || ''}  fire rects ${EXT.effects.fire ? EXT.effects.fire.rectSource : '-'}`, 10, 42);
+}
+
+// ---------------------------------------------------------------- loop
+let last = 0, acc = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (game.paused || !game.ready) { last = now; return; }
+  let dt = (now - last) / 1000; last = now;
+  if (dt > 0.1) dt = 0.1;
+  const st = game.stats;
+  st.frameMs += (dt * 1000 - st.frameMs) * 0.05;
+  st.fps = st.frameMs > 0 ? 1000 / st.frameMs : 0;
+  const t0 = performance.now();
+  pollInput();
+  if (input.restartPressed) { input.restartPressed = false; resetRound(); }
+  if (game.hitStop > 0) {
+    game.hitStop -= dt;
+    if (game.hitStop <= 0) { addTrauma(game.pendingTrauma); game.pendingTrauma = 0; }
+  } else {
+    let scale = 1;
+    if (game.slowT > 0) { game.slowT -= dt; scale = T.slowMoScale; }
+    acc += dt * scale;
+    let n = 0;
+    while (acc >= STEP && n < 6) { update(STEP); acc -= STEP; n++; }
+    if (n === 6) acc = 0;
+    st.steps += n;
+  }
+  let burning = 0;
+  for (const s of slimes) if (s.burnT > 0 && s.state !== 'dead') burning++;
+  Sfx.update(fireActive && game.hitStop <= 0, burning);
+  render();
+  st.workMs += (performance.now() - t0 - st.workMs) * 0.05;
+}
+
+document.addEventListener('visibilitychange', () => {
+  game.paused = document.hidden;
+  if (Sfx.ctx) { if (document.hidden) Sfx.ctx.suspend(); else Sfx.ctx.resume(); }
+  acc = 0; keys.clear();
+});
+addEventListener('resize', resize);
+
+async function boot() {
+  resize();
+  updateHud();
+  await loadScript('assets/slime/slime-drop-anim.manifest.js');
+  await loadScript('assets/exterminator/exterminator-anim.manifest.js');
+  const A = window.SPRITE_ANIMS || {};
+  const sm = A['slime-drop'];
+  if (!sm) {
+    overlay.hidden = false;
+    document.getElementById('overlay-title').textContent = 'Manifesto do slime não encontrado';
+    document.getElementById('overlay-sub').textContent = 'Esperado: assets/slime/slime-drop-anim.manifest.js no formato SPRITE_ANIMS';
+    return;
+  }
+  SLIME = buildSheet(sm, await loadImage('assets/slime/' + sm.image), {});
+  const em = A.exterminator;
+  if (em) {
+    const dir = 'assets/exterminator/';
+    const eff = {};
+    for (const [k, e] of Object.entries(em.effects || {})) eff[k] = await loadImage(dir + e.image);
+    EXT = buildSheet(em, await loadImage(dir + em.image), eff);
+    EXT.real = true;
+  } else {
+    const ph = makePlaceholderExterminator();
+    EXT = buildSheet(ph.manifest, ph.sheet, { fire: ph.fire });
+    EXT.real = false;
+  }
+  await loadScript('assets/level/level-assets.manifest.js');
+  LA = window.LEVEL_ASSETS;
+  if (!LA) throw new Error('level assets manifest missing');
+  [tilesImg, midImg] = await Promise.all([loadImage('assets/level/' + LA.tiles.image), loadImage('assets/level/' + LA.mid.image)]);
+  farCv = buildFar(await loadImage('assets/level/' + LA.far.image));
+  layoutLevel();
+  levelCv = buildLevel();
+  slimePhases();
+  resetRound();
+  game.ready = true;
+}
+
+window.__game = { game, player, slimes, input, keys, T, P, D, SP, sfx: Sfx, get ext() { return EXT; }, get fireRects() { return fireRects; }, get fireActive() { return fireActive; }, resetRound: () => resetRound() };
+requestAnimationFrame((t) => { last = t; requestAnimationFrame(frame); });
+boot();
+})();
+</script>
+</body>
+</html>

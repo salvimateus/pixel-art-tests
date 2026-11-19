@@ -1,0 +1,121 @@
+{
+  "model": "gpt-image-2.6-sunburst",
+  "endpoint": "POST https://api.openai.com/v1/images/edits",
+  "parameters": {
+    "model": "gpt-image-2.6-sunburst",
+    "n": 1,
+    "size": "2048x1376",
+    "quality": "max",
+    "complexity": "high",
+    "output_format": "png",
+    "background": "transparent"
+  },
+  "prompt_file": "/tmp/claude-1000/-home-salvi-www-salvi-games-pixel-art-tests/4745a76b-cf15-49c4-9ac7-bbce01b880ee/scratchpad/slimegen-hero-spec.json",
+  "prompt_spec": {
+    "type": "edit",
+    "task": "Add 3 different versions of a player character for an adult horror video game. The character fights the slime monster in image 1. The user will select one winner.",
+    "edit": "Draw 3 new characters in the empty left part of the image, side by side, all on the same ground line as the slime. Keep the slime of image 1 unchanged, as the scale and style reference.",
+    "characters": [
+      {
+        "position": "left",
+        "name": "Exterminator",
+        "description": "A pest exterminator in a torn, stained yellow hazmat suit and a gas mask with one cracked lens. A heavy fuel tank on the back feeds a rusty flamethrower that he holds in both hands, with a small solid pixel pilot flame at the nozzle. The suit has splatters of dried blood and green goo. Thick rubber gloves and boots."
+      },
+      {
+        "position": "middle",
+        "name": "Butcher",
+        "description": "A huge, bald butcher with a scarred, stitched face and one eye covered by a dirty bandage. He wears a torn, stained undershirt and a heavy leather apron soaked in old blood. He holds a big meat cleaver in one hand and a meat hook on a chain in the other hand. Acid burn scars on his forearms."
+      },
+      {
+        "position": "right of the middle, left of the slime",
+        "name": "Survivor",
+        "description": "A gaunt female survivor in a torn dark raincoat, cargo pants and heavy boots, with a headlamp on her forehead. She holds a sawed-off double-barrel shotgun. Her left forearm is half dissolved by acid: in places the flesh is gone and the bones show between dirty bandages. Pale face with a deep cut on the cheek."
+      }
+    ],
+    "preserve": "The slime of image 1: its position, size, pose, colors and pixels. The pixel art style of image 1: the same art pixel size, the dark outline, the glossy detailed shading and the light from the top left.",
+    "references": "Image 1 shows the slime enemy at its final scale. It gives the pixel size, the scale, the outline and the shading style for the new characters.",
+    "layout": "From left to right: Exterminator, Butcher, Survivor, then the slime at the right. Each character is about 1.4 times the height of the slime, about 630 image pixels tall, and stands on the same ground line as the slime. Empty transparent space between all four figures. They never touch or overlap and stay fully inside the image.",
+    "proportions": "Realistic adult proportions, about 6.5 heads tall. Not chibi, not cartoon.",
+    "colors": "Muted, dirty colors that contrast with the lime green slime: rust, dark leather, olive drab, grime, dried blood. Use lime green on the characters only as slime splatter.",
+    "rendering": "Pixel art with hard pixel edges, no anti-aliasing, no gradients, no blur. 1 art pixel dark outline around each character.",
+    "view": "3/4 view. The three characters face to the right, toward the slime, in a ready combat stance.",
+    "background": "transparent",
+    "avoid": [
+      "changes to the slime",
+      "a second slime",
+      "sexualized clothing or poses",
+      "nudity",
+      "cute or chibi proportions",
+      "text",
+      "labels",
+      "numbers",
+      "anti-aliasing",
+      "gradients",
+      "soft shadows",
+      "semi-transparent pixels",
+      "glow",
+      "drop shadow",
+      "scenery",
+      "ground tiles",
+      "steam",
+      "smoke"
+    ]
+  },
+  "input_images": [
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/hero-versions-reference.png"
+  ],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/hero-versions.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/hero-versions-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.0121744,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "grid_retry": null,
+    "native_size": "768x536",
+    "art_pixel_size": {
+      "x": 2.6667,
+      "y": 2.5672
+    },
+    "grid": {
+      "cols": 768,
+      "rows": 536,
+      "pixelSize": {
+        "x": 2.6667,
+        "y": 2.5672
+      },
+      "quality": 3,
+      "notes": []
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 2302,
+    "input_tokens_details": {
+      "image_tokens": 1504,
+      "text_tokens": 798
+    },
+    "output_tokens": 7401,
+    "output_tokens_details": {
+      "image_tokens": 7401,
+      "text_tokens": 0
+    },
+    "total_tokens": 9703
+  },
+  "estimated_cost_usd": 0.238052,
+  "request_id": "req_8699f5fa79ad4b85a6133bb555ad8793"
+}

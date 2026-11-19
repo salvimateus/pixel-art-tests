@@ -1,0 +1,163 @@
+{
+  "model": "gpt-image-2.6-sunburst",
+  "endpoint": "POST https://api.openai.com/v1/images/edits",
+  "parameters": {
+    "model": "gpt-image-2.6-sunburst",
+    "n": 1,
+    "size": "1600x960",
+    "quality": "max",
+    "complexity": "high",
+    "output_format": "png",
+    "background": "transparent"
+  },
+  "prompt_file": "/tmp/claude-1000/-home-salvi-www-salvi-games-pixel-art-tests/566f1730-a4bc-4dce-9daf-5a2415f59168/scratchpad/black-knight-parts.json",
+  "prompt_spec": {
+    "type": "edit",
+    "task": "Body parts sheet for a skeletal cutout rig of a 2D side-scroller player character. Each part will be cut from this sheet and rotated at its joint by a game engine, for idle, walk, sprint, jump, hurt and death animations.",
+    "edit": "In the empty right part of image 1, draw each body part of the knight separately, as a complete isolated piece. Keep the knight on the left of image 1 unchanged as the master: it gives the design, the colors, the scale and the pixel grid.",
+    "references": "Image 1 is the canvas to edit. The knight on the left is the master character. Each art pixel is one solid 5x5 block of image pixels.",
+    "parts": [
+      {
+        "name": "helmet",
+        "description": "The closed bascinet with the pointed visor pointing right, in profile, as on the master, with the neck guard (gorget). The bottom of the gorget is rounded, because it overlaps the top of the torso."
+      },
+      {
+        "name": "torso",
+        "description": "The blackened breastplate and back plate in near profile with the top of the crimson tabard, from the neck to the brown belt with its steel buckle. No head, no arms, no shoulder plates. A rounded neck opening at the top."
+      },
+      {
+        "name": "hips",
+        "description": "The dark plate hip armor (faulds) under the belt, from the belt to the top of the thighs. No legs."
+      },
+      {
+        "name": "tabard front flap",
+        "description": "The tattered crimson cloth that hangs in front of the hips, from the belt to mid-thigh, as on the master."
+      },
+      {
+        "name": "tabard back flap",
+        "description": "The tattered crimson cloth that hangs behind the hips, from the belt to mid-thigh."
+      },
+      {
+        "name": "upper arm",
+        "description": "The shoulder plate (pauldron) with its crimson edge at the top, the upper arm plate below it and the elbow cop at the bottom. Hanging straight down, vertical."
+      },
+      {
+        "name": "forearm",
+        "description": "The forearm plate (vambrace) from the elbow to the wrist. Hanging straight down, vertical. The top end is rounded, because it goes under the elbow cop."
+      },
+      {
+        "name": "gauntlet",
+        "description": "The closed armored fist in side view, knuckles pointing right. The fist holds nothing: the grip channel through the fist is empty, because the sword is a separate part drawn under the fingers."
+      },
+      {
+        "name": "thigh",
+        "description": "The thigh plate (cuisse) from the hip to the knee, with the knee cop (poleyn) and its crimson edge at the bottom. Vertical."
+      },
+      {
+        "name": "shin",
+        "description": "The shin plate (greave) from below the knee to the ankle, with the brown leather strap. Vertical. The top end is rounded, because it goes under the knee cop."
+      },
+      {
+        "name": "sabaton",
+        "description": "The armored foot in full side view, the toe points right, the sole is flat and horizontal. Copy the front foot of the master, the foot on the right, which is in full profile. The top end is rounded, because it goes under the shin."
+      },
+      {
+        "name": "sword",
+        "description": "The complete hand-and-a-half sword, horizontal, the point to the right and the pommel to the left, with the cross guard, the black grip and the dark steel blade. Same length as on the master."
+      },
+      {
+        "name": "shield",
+        "description": "The complete black heater shield with the gold rim and the gold hawk emblem, in the same view as on the master. No hand and no arm are visible."
+      }
+    ],
+    "scale": "Each part has exactly the same size and the same pixel grid as the same part on the master. Do not enlarge any part.",
+    "layout": "Three rows in the empty right part of image 1. Row 1: helmet, torso, hips, tabard front flap, tabard back flap. Row 2: upper arm, forearm, gauntlet, thigh, shin, sabaton. Row 3: sword, shield. At least 6 art pixels (30 image pixels) of empty transparent space around each part. No part touches another part or the master. All parts stay fully inside the image.",
+    "joints": "Each part is complete, also where it is hidden by another part on the master. Each joint end is a closed, rounded shape, so that it stays covered when the part rotates.",
+    "preserve": "The master knight on the left of image 1: its position, size, pose, colors and pixels. The pixel grid of image 1: each art pixel is one solid 5x5 block of image pixels. The design of the master: blackened steel plate with dark grey highlights and thin crimson edge accents, round rivets, brown leather straps, the steel buckle, the tattered crimson tabard, the black and gold shield with the hawk, the dark steel sword with the black grip.",
+    "style": "Detailed pixel art, 1 art pixel dark outline around each part, 4 to 5 shading tones per material, light from the top left, the same as the master.",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "avoid": [
+      "text",
+      "labels",
+      "numbers",
+      "arrows",
+      "guide lines",
+      "boxes or frames around the parts",
+      "grid lines",
+      "a second full knight",
+      "parts that touch or overlap",
+      "parts bigger than on the master",
+      "a hand on the shield",
+      "a sword inside the gauntlet",
+      "a foot that points toward the viewer",
+      "changes to the master",
+      "anti-aliasing",
+      "gradients",
+      "soft shadows",
+      "glow",
+      "drop shadow",
+      "scenery",
+      "checkerboard pattern"
+    ]
+  },
+  "input_images": [
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-parts-canvas.png"
+  ],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-parts.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-parts-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.0138926,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "grid_retry": null,
+    "native_size": "317x192",
+    "art_pixel_size": {
+      "x": 5.028,
+      "y": 5.0071
+    },
+    "grid": {
+      "cols": 317,
+      "rows": 192,
+      "pixelSize": {
+        "x": 5.028,
+        "y": 5.0071
+      },
+      "quality": 3,
+      "notes": [
+        "elastic"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 2836,
+    "input_tokens_details": {
+      "image_tokens": 1500,
+      "text_tokens": 1336
+    },
+    "output_tokens": 4923,
+    "output_tokens_details": {
+      "image_tokens": 4923,
+      "text_tokens": 0
+    },
+    "total_tokens": 7759
+  },
+  "estimated_cost_usd": 0.16637,
+  "request_id": "req_df53ddcc120a465d8f9ebf84c06447f8"
+}

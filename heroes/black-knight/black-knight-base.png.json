@@ -1,0 +1,107 @@
+{
+  "model": "gpt-image-2.6-sunburst",
+  "endpoint": "POST https://api.openai.com/v1/images/edits",
+  "parameters": {
+    "model": "gpt-image-2.6-sunburst",
+    "n": 1,
+    "size": "896x1024",
+    "quality": "max",
+    "complexity": "high",
+    "output_format": "png",
+    "background": "transparent"
+  },
+  "prompt_file": "/tmp/claude-1000/-home-salvi-www-salvi-games-pixel-art-tests/566f1730-a4bc-4dce-9daf-5a2415f59168/scratchpad/black-knight-base.json",
+  "prompt_spec": {
+    "type": "edit",
+    "task": "Base pose of the player character for a 2D side-scrolling platform game. The result will be cut into separate body parts and animated with a skeletal cutout rig (idle, walk, sprint, jump, hurt, death).",
+    "edit": "Redraw the knight of image 1 in a near side view. Turn the whole body toward the right, so the knight walks to the right. Keep the same knight, the same size and the same pixel grid.",
+    "references": "Image 1 is the canvas to edit: a rough low-resolution version of the knight, about 100 art pixels tall, on a pixel grid where each art pixel is one solid 8x8 block of image pixels. It gives the scale, the pixel grid and the ground line. Image 2 is the high-detail concept of the same knight. It gives only the design: the armor shapes, the colors, the crimson tabard and the shield emblem. The camera angle and the pose of images 1 and 2 are wrong. Do not copy them.",
+    "view": "Near side view, facing right. The torso, the hips and the head are turned only about 20 degrees toward the viewer, so only a thin part of the chest front is visible. The helmet is in profile and the pointed visor points to the right.",
+    "legs": "Both legs are in side view and both feet point to the right, in the walk direction. Neutral standing pose: the legs are almost straight, the near leg a little forward, the far leg a little back, a small gap between them. Both soles are flat on the ground line.",
+    "arms": "The near arm, the arm closest to the viewer, holds the sword at waist height, the blade points forward to the right and slightly up. The far arm holds the shield forward in front of the chest. The shield face is turned toward the viewer at about 45 degrees, so the gold hawk emblem stays readable. The near arm is slightly away from the torso, so the shoulder, the elbow and the wrist are clearly visible.",
+    "rig_readiness": "Each body part reads as a separate solid shape: helmet, torso, hips, upper arm, forearm, gauntlet, thigh, shin, sabaton, sword, shield. Clear plate breaks at the shoulder, elbow, wrist, hip, knee and ankle. The tattered tabard ends at mid-thigh, so the knees and shins are fully visible. No cape, no loose cloth that hides a joint.",
+    "preserve": "The pixel grid of image 1: each art pixel is one solid 8x8 block of image pixels, aligned to the grid of image 1. The character height: about 100 art pixels (about 800 image pixels) from the sole to the top of the helmet. The ground line of image 1. The design of image 2: blackened steel plate armor with dark grey highlights and thin crimson edge accents, the pointed hounskull visor bascinet, round rivets, brown leather straps and belt with a steel buckle, the short tattered crimson tabard, the black heater shield with a gold rim and the gold hawk emblem, the hand-and-a-half sword with a dark steel blade, a cross guard and a black grip.",
+    "style": "Detailed pixel art, 1 art pixel dark outline, 4 to 5 shading tones per material, light from the top left. Realistic adult proportions, about 6.5 heads tall. Not chibi, not cartoon.",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "avoid": [
+      "three-quarter front view",
+      "chest facing the viewer",
+      "feet pointing toward the viewer",
+      "a bigger or smaller character",
+      "a smaller pixel size than 8x8 image pixels",
+      "sword in the far hand",
+      "cape",
+      "text",
+      "labels",
+      "anti-aliasing",
+      "gradients",
+      "soft shadows",
+      "glow",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "checkerboard pattern"
+    ]
+  },
+  "input_images": [
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-guide.png",
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-concept-crop.png"
+  ],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-base.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-base-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.00700814,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "grid_retry": null,
+    "native_size": "170x197",
+    "art_pixel_size": {
+      "x": 5.2919,
+      "y": 5.1753
+    },
+    "grid": {
+      "cols": 170,
+      "rows": 197,
+      "pixelSize": {
+        "x": 5.2919,
+        "y": 5.1753
+      },
+      "quality": 1,
+      "notes": [
+        "weak-grid"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 2431,
+    "input_tokens_details": {
+      "image_tokens": 1504,
+      "text_tokens": 927
+    },
+    "output_tokens": 5882,
+    "output_tokens_details": {
+      "image_tokens": 5882,
+      "text_tokens": 0
+    },
+    "total_tokens": 8313
+  },
+  "estimated_cost_usd": 0.193127,
+  "request_id": "req_4ec95daa13324e04b5b336ee2ad3ed2c"
+}

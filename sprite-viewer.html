@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualizador de sprites</title>
+<meta name="description" content="Visualizador local das animações dos personagens, com efeitos, deslocamento vertical, controle de FPS, pausa e zoom.">
+<style>
+@layer reset, base, components;
+
+@layer reset {
+  :where(*, *::before, *::after) { box-sizing: border-box; margin: 0; }
+  :where(button, input, select) { font: inherit; color: inherit; }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --bg: oklch(0.18 0.01 260);
+    --surface: oklch(0.24 0.012 260);
+    --surface-2: oklch(0.3 0.014 260);
+    --border: oklch(0.38 0.014 260);
+    --text: oklch(0.96 0.005 260);
+    --muted: oklch(0.78 0.01 260);
+    --accent: oklch(0.8 0.15 150);
+    --accent-text: oklch(0.2 0.04 150);
+    --danger-bg: oklch(0.32 0.09 25);
+    --danger-border: oklch(0.6 0.16 25);
+    --stage-dark: oklch(0.14 0.005 260);
+    --stage-light: oklch(0.96 0 0);
+    --checker-a: oklch(0.82 0 0);
+    --checker-b: oklch(0.62 0 0);
+    --radius: 0.5rem;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.4;
+    padding: 1rem;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+
+@layer components {
+  .page-header { display: grid; gap: 0.75rem; margin-block-end: 1rem; }
+  .page-title { font-size: clamp(1.15rem, 1rem + 1vw, 1.6rem); }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .field { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); }
+  .field-value { color: var(--text); min-width: 2.2ch; font-variant-numeric: tabular-nums; }
+
+  .btn {
+    min-height: 2.25rem;
+    padding: 0.3rem 0.75rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color 120ms cubic-bezier(0.4, 0, 0.2, 1), transform 120ms cubic-bezier(0.4, 0, 0.2, 1);
+    &:hover:not(:disabled) { background: color-mix(in oklch, var(--surface-2), var(--text) 12%); }
+    &:active:not(:disabled) { transform: translateY(1px); transition-duration: 60ms; }
+    &:disabled { opacity: 0.45; cursor: not-allowed; }
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  .btn-primary:hover:not(:disabled) { background: color-mix(in oklch, var(--accent), white 15%); }
+
+  .select, .num {
+    min-height: 2.25rem;
+    padding: 0.2rem 0.4rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .num { width: 4.2rem; }
+  .range { width: 100%; min-width: 0; accent-color: var(--accent); }
+
+  .panels {
+    display: grid;
+    /* Panels wrap when the widest zoomed animation no longer fits beside the others. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(16rem, calc(var(--canvas-w, 0px) + 3.25rem))), 1fr));
+    gap: 1rem;
+    align-items: start;
+  }
+  .panel {
+    contain: layout style;
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+  .panel-name { font-size: 1.1rem; }
+  .panel-counter { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .stage {
+    display: flex;
+    justify-content: safe center;
+    align-items: center;
+    min-height: 6rem;
+    padding: 0.5rem;
+    overflow: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .stage-canvas { display: block; image-rendering: pixelated; }
+  :root[data-bg="dark"] .stage { background: var(--stage-dark); }
+  :root[data-bg="light"] .stage { background: var(--stage-light); }
+  :root[data-bg="checker"] .stage {
+    background: repeating-conic-gradient(var(--checker-a) 0 25%, var(--checker-b) 0 50%) 0 0 / 16px 16px;
+  }
+
+  .fps-row { display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; align-items: center; color: var(--muted); }
+  .panel-actions { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 0.5rem; }
+
+  .status { display: grid; gap: 0.75rem; margin-block-end: 1rem; }
+  .status:empty { display: none; }
+  .error {
+    display: grid;
+    gap: 0.4rem;
+    padding: 1rem;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius);
+    overflow-wrap: anywhere;
+    & ul { padding-inline-start: 1.2rem; }
+    & code { font-weight: 700; }
+  }
+  .hint { color: var(--muted); font-size: 0.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <h1 class="page-title">Animações dos personagens</h1>
+  <div class="toolbar">
+    <label class="field">Personagem
+      <select class="select" id="character" disabled></select>
+    </label>
+    <button type="button" class="btn btn-primary" id="toggle-all">Pausar tudo</button>
+    <label class="field">Zoom
+      <input type="range" id="zoom" min="1" max="8" step="1" value="4">
+      <output class="field-value" id="zoom-value" for="zoom">4x</output>
+    </label>
+    <label class="field">Fundo
+      <select class="select" id="background">
+        <option value="dark">Escuro</option>
+        <option value="light">Claro</option>
+        <option value="checker">Xadrez</option>
+      </select>
+    </label>
+    <label class="field">
+      <input type="checkbox" id="guides">
+      Borda, pivô e efeitos
+    </label>
+  </div>
+  <p class="hint">Espaço: pausar ou continuar tudo.</p>
+</header>
+<main>
+  <div class="status" id="status" aria-live="polite"><p class="hint">Carregando personagens…</p></div>
+  <section class="panels" id="panels" aria-label="Animações"></section>
+</main>
+
+<template id="panel-template">
+  <article class="panel">
+    <div class="panel-head">
+      <h2 class="panel-name"></h2>
+      <span class="panel-counter" aria-live="off"></span>
+    </div>
+    <div class="stage"><canvas class="stage-canvas"></canvas></div>
+    <div class="fps-row">
+      <span>FPS</span>
+      <input type="range" class="range fps-range" min="1" max="30" step="1">
+      <input type="number" class="num fps-number" min="1" max="30" step="1" inputmode="numeric">
+    </div>
+    <div class="panel-actions">
+      <button type="button" class="btn step-back" aria-label="Quadro anterior">&#9664;</button>
+      <button type="button" class="btn play-toggle"></button>
+      <button type="button" class="btn step-forward" aria-label="Próximo quadro">&#9654;</button>
+    </div>
+  </article>
+</template>
+
+<script>
+(() => {
+  // Each manifest registers itself in window.SPRITE_ANIMS[id]; image paths are relative to the manifest folder.
+  const MANIFEST_PATHS = [
+    'assets/slime/slime-drop-anim.manifest.js',
+    'assets/exterminator/exterminator-anim.manifest.js',
+  ];
+  const CHARACTER_LABELS = { 'slime-drop': 'Slime', exterminator: 'Exterminador' };
+  const STORAGE_KEY = 'sprite-viewer:character';
+  const FPS_MIN = 1;
+  const FPS_MAX = 30;
+  const ZOOM_MIN = 1;
+  const ZOOM_MAX = 8;
+  const MAX_FRAME_DELTA_MS = 250;
+  const COLOR_CELL = 'rgb(255 64 160)';
+  const COLOR_PIVOT = 'rgb(0 230 255)';
+  const COLOR_PIVOT_CORE = 'rgb(255 230 0)';
+  const COLOR_FX_RECT = 'rgb(255 150 0)';
+  const COLOR_FX_ANCHOR = 'rgb(120 255 90)';
+
+  const root = document.documentElement;
+  const statusEl = document.getElementById('status');
+  const panelsEl = document.getElementById('panels');
+  const characterSelect = document.getElementById('character');
+  const toggleAllBtn = document.getElementById('toggle-all');
+  const zoomInput = document.getElementById('zoom');
+  const zoomValue = document.getElementById('zoom-value');
+  const bgSelect = document.getElementById('background');
+  const guidesInput = document.getElementById('guides');
+  const template = document.getElementById('panel-template');
+
+  const state = { zoom: 4, guides: false, characters: [], current: null, panels: [] };
+
+  const dirOf = (path) => path.slice(0, path.lastIndexOf('/') + 1);
+  const idFromPath = (path) => path.slice(path.lastIndexOf('/') + 1).replace(/-anim\.manifest\.js$/, '');
+  const labelOf = (id) => CHARACTER_LABELS[id] ?? id;
+
+  function storageGet() {
+    try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
+  }
+  function storageSet(value) {
+    try { localStorage.setItem(STORAGE_KEY, value); } catch { /* storage unavailable */ }
+  }
+
+  function clampInt(value, min, max, fallback) {
+    const n = Math.round(Number(value));
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+  }
+
+  // ---- Loading ----
+
+  function loadScript(src) {
+    return new Promise((resolve) => {
+      const el = document.createElement('script');
+      el.src = src;
+      el.addEventListener('load', () => resolve(true), { once: true });
+      el.addEventListener('error', () => resolve(false), { once: true });
+      document.head.append(el);
+    });
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.addEventListener('load', () => resolve(img), { once: true });
+      img.addEventListener('error', () => resolve(null), { once: true });
+      img.src = src;
+    });
+  }
+
+  function validateManifest(m) {
+    if (!m || typeof m !== 'object') return 'O arquivo não registrou o personagem em window.SPRITE_ANIMS.';
+    if (typeof m.image !== 'string' || !m.image) return 'O campo "image" está ausente.';
+    if (!(m.frameWidth > 0) || !(m.frameHeight > 0)) return 'Os campos "frameWidth" e "frameHeight" precisam ser maiores que zero.';
+    if (!Array.isArray(m.animations) || m.animations.length === 0) return 'A lista "animations" está vazia.';
+    return null;
+  }
+
+  // Scripts load one at a time so each new key in SPRITE_ANIMS belongs to the script that just ran.
+  async function loadCharacter(path) {
+    const dir = dirOf(path);
+    const ch = { path, id: idFromPath(path), manifest: null, sheet: null, effectImages: {}, problems: [], missing: [] };
+    const registry = (window.SPRITE_ANIMS ??= {});
+    const before = new Set(Object.keys(registry));
+
+    if (!(await loadScript(path))) {
+      ch.missing.push(path);
+      return ch;
+    }
+    const added = Object.keys(registry).filter((k) => !before.has(k));
+    const id = added[0] ?? (registry[ch.id] ? ch.id : null);
+    const manifest = id ? registry[id] : undefined;
+    const problem = validateManifest(manifest);
+    if (problem) {
+      ch.problems.push({ path, text: problem });
+      return ch;
+    }
+    ch.id = manifest.id ?? id;
+    ch.manifest = manifest;
+
+    const effects = manifest.effects ?? {};
+    const sheetPath = dir + manifest.image;
+    const effectNames = Object.keys(effects);
+    const [sheet, ...effectImgs] = await Promise.all([
+      loadImage(sheetPath),
+      ...effectNames.map((name) => loadImage(dir + effects[name].image)),
+    ]);
+    if (sheet) ch.sheet = sheet; else ch.missing.push(sheetPath);
+    effectNames.forEach((name, i) => {
+      if (effectImgs[i]) ch.effectImages[name] = effectImgs[i];
+      else ch.missing.push(dir + effects[name].image);
+    });
+
+    for (const anim of manifest.animations) {
+      for (const entry of anim.fx ?? []) {
+        if (entry && !effects[entry.effect]) {
+          ch.problems.push({ path, text: `A animação "${anim.name}" usa o efeito "${entry.effect}", que não existe em "effects".` });
+        }
+      }
+    }
+    return ch;
+  }
+
+  // ---- Geometry (art px, relative to the top left corner of the cell) ----
+
+  const offsetAt = (anim, i) => (Array.isArray(anim.offsetY) && Number.isFinite(anim.offsetY[i]) ? anim.offsetY[i] : 0);
+
+  function fxAt(ch, anim, i) {
+    const entry = Array.isArray(anim.fx) ? anim.fx[i] : null;
+    if (!entry) return null;
+    const def = ch.manifest.effects?.[entry.effect];
+    if (!def) return null;
+    const anchor = def.anchor ?? { x: 0, y: 0 };
+    return {
+      def,
+      image: ch.effectImages[entry.effect] ?? null,
+      frame: entry.frame ?? 0,
+      left: entry.x - anchor.x,
+      top: entry.y + offsetAt(anim, i) - anchor.y,
+      anchorX: entry.x,
+      anchorY: entry.y + offsetAt(anim, i),
+    };
+  }
+
+  // Union of the cell, every offsetY shift and every effect rectangle, so nothing is cut.
+  function animBounds(ch, anim) {
+    const { frameWidth: fw, frameHeight: fh } = ch.manifest;
+    let minX = 0, minY = 0, maxX = fw, maxY = fh;
+    for (let i = 0; i < anim.frames; i++) {
+      const oy = offsetAt(anim, i);
+      minY = Math.min(minY, oy);
+      maxY = Math.max(maxY, fh + oy);
+      const fx = fxAt(ch, anim, i);
+      if (fx) {
+        minX = Math.min(minX, fx.left);
+        minY = Math.min(minY, fx.top);
+        maxX = Math.max(maxX, fx.left + fx.def.frameWidth);
+        maxY = Math.max(maxY, fx.top + fx.def.frameHeight);
+      }
+    }
+    minX = Math.floor(minX); minY = Math.floor(minY);
+    return { minX, minY, width: Math.ceil(maxX) - minX, height: Math.ceil(maxY) - minY };
+  }
+
+  // ---- Rendering ----
+
+  // Backing store is sized in device pixels so every art pixel maps to a whole number of device pixels.
+  function deviceScale() {
+    return Math.max(1, Math.round(state.zoom * (window.devicePixelRatio || 1)));
+  }
+
+  function resizeCanvases() {
+    const scale = deviceScale();
+    const dpr = window.devicePixelRatio || 1;
+    let widest = 0;
+    for (const p of state.panels) {
+      p.canvas.width = p.bounds.width * scale;
+      p.canvas.height = p.bounds.height * scale;
+      const cssW = p.canvas.width / dpr;
+      p.canvas.style.width = `${cssW}px`;
+      p.canvas.style.height = `${p.canvas.height / dpr}px`;
+      widest = Math.max(widest, cssW);
+      p.ctx = p.canvas.getContext('2d');
+      p.dirty = true;
+    }
+    panelsEl.style.setProperty('--canvas-w', `${widest}px`);
+  }
+
+  function strokeRect(ctx, x, y, w, h, line, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, line);
+    ctx.fillRect(x, y + h - line, w, line);
+    ctx.fillRect(x, y, line, h);
+    ctx.fillRect(x + w - line, y, line, h);
+  }
+
+  function crossMark(ctx, x, y, arm, line, color, core) {
+    const half = Math.floor(line / 2);
+    ctx.fillStyle = color;
+    ctx.fillRect(x - arm, y - half, arm * 2, line);
+    ctx.fillRect(x - half, y - arm, line, arm * 2);
+    if (core) {
+      ctx.fillStyle = core;
+      ctx.fillRect(x - line, y - line, line * 2, line * 2);
+    }
+  }
+
+  function drawPanel(p) {
+    const ch = state.current;
+    const { frameWidth: fw, frameHeight: fh, pivot } = ch.manifest;
+    const scale = deviceScale();
+    const ctx = p.ctx;
+    const { minX, minY } = p.bounds;
+    const oy = offsetAt(p.anim, p.frame);
+    const cellX = -minX * scale;
+    const cellY = (oy - minY) * scale;
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
+    ctx.drawImage(ch.sheet, p.frame * fw, p.anim.row * fh, fw, fh, cellX, cellY, fw * scale, fh * scale);
+
+    const fx = fxAt(ch, p.anim, p.frame);
+    const fxX = fx ? (fx.left - minX) * scale : 0;
+    const fxY = fx ? (fx.top - minY) * scale : 0;
+    if (fx?.image && fx.frame >= 0 && fx.frame < fx.def.frames) {
+      const { frameWidth: ew, frameHeight: eh } = fx.def;
+      ctx.drawImage(fx.image, fx.frame * ew, 0, ew, eh, fxX, fxY, ew * scale, eh * scale);
+    }
+
+    if (state.guides) {
+      const line = Math.max(2, Math.round(scale / 4));
+      const arm = Math.max(8, scale * 2);
+      strokeRect(ctx, cellX, cellY, fw * scale, fh * scale, line, COLOR_CELL);
+      if (fx) {
+        strokeRect(ctx, fxX, fxY, fx.def.frameWidth * scale, fx.def.frameHeight * scale, line, COLOR_FX_RECT);
+        crossMark(ctx, Math.round((fx.anchorX - minX) * scale), Math.round((fx.anchorY - minY) * scale), arm, line, COLOR_FX_ANCHOR, null);
+      }
+      // The pivot is the ground point of the entity, so it ignores offsetY.
+      if (pivot && Number.isFinite(pivot.x) && Number.isFinite(pivot.y)) {
+        crossMark(ctx, Math.round((pivot.x - minX) * scale), Math.round((pivot.y - minY) * scale), arm, line, COLOR_PIVOT, COLOR_PIVOT_CORE);
+      }
+    }
+    p.counterEl.textContent = `${p.frame + 1}/${p.anim.frames}`;
+    p.dirty = false;
+  }
+
+  // ---- Panels ----
+
+  function setPlaying(p, playing) {
+    p.playing = playing;
+    p.accumulator = 0;
+    p.playBtn.textContent = playing ? 'Pausar' : 'Tocar';
+    p.playBtn.setAttribute('aria-pressed', String(playing));
+    p.backBtn.disabled = playing;
+    p.fwdBtn.disabled = playing;
+  }
+
+  function syncToggleAll() {
+    const anyPlaying = state.panels.some((p) => p.playing);
+    toggleAllBtn.textContent = anyPlaying ? 'Pausar tudo' : 'Tocar tudo';
+    toggleAllBtn.disabled = state.panels.length === 0;
+  }
+
+  function toggleAll() {
+    if (state.panels.length === 0) return;
+    const anyPlaying = state.panels.some((p) => p.playing);
+    for (const p of state.panels) setPlaying(p, !anyPlaying);
+    syncToggleAll();
+  }
+
+  function setFps(p, value) {
+    p.fps = clampInt(value, FPS_MIN, FPS_MAX, p.fps);
+    p.fpsRange.value = String(p.fps);
+    p.fpsNumber.value = String(p.fps);
+  }
+
+  function step(p, delta) {
+    if (p.playing) return;
+    p.frame = (p.frame + delta + p.anim.frames) % p.anim.frames;
+    p.dirty = true;
+  }
+
+  function createPanel(ch, anim) {
+    const node = template.content.firstElementChild.cloneNode(true);
+    const p = {
+      anim,
+      bounds: animBounds(ch, anim),
+      frame: 0,
+      fps: 1,
+      playing: true,
+      accumulator: 0,
+      dirty: true,
+      canvas: node.querySelector('.stage-canvas'),
+      ctx: null,
+      counterEl: node.querySelector('.panel-counter'),
+      fpsRange: node.querySelector('.fps-range'),
+      fpsNumber: node.querySelector('.fps-number'),
+      playBtn: node.querySelector('.play-toggle'),
+      backBtn: node.querySelector('.step-back'),
+      fwdBtn: node.querySelector('.step-forward'),
+    };
+    node.querySelector('.panel-name').textContent = anim.name;
+    p.canvas.setAttribute('role', 'img');
+    p.canvas.setAttribute('aria-label', `Animação ${anim.name} de ${labelOf(ch.id)}`);
+    p.fpsRange.name = `fps-range-${anim.name}`;
+    p.fpsNumber.name = `fps-number-${anim.name}`;
+    p.fpsRange.setAttribute('aria-label', `FPS de ${anim.name}`);
+    p.fpsNumber.setAttribute('aria-label', `FPS de ${anim.name} (número)`);
+    setFps(p, anim.fps);
+    setPlaying(p, true);
+
+    p.fpsRange.addEventListener('input', () => setFps(p, p.fpsRange.value));
+    p.fpsNumber.addEventListener('input', () => {
+      if (p.fpsNumber.value === '') return;
+      const n = clampInt(p.fpsNumber.value, FPS_MIN, FPS_MAX, p.fps);
+      p.fps = n;
+      p.fpsRange.value = String(n);
+    });
+    p.fpsNumber.addEventListener('change', () => setFps(p, p.fpsNumber.value));
+    p.playBtn.addEventListener('click', () => { setPlaying(p, !p.playing); syncToggleAll(); });
+    p.backBtn.addEventListener('click', () => step(p, -1));
+    p.fwdBtn.addEventListener('click', () => step(p, 1));
+
+    panelsEl.append(node);
+    return p;
+  }
+
+  function renderStatus(ch) {
+    statusEl.replaceChildren();
+    if (ch.missing.length === 0 && ch.problems.length === 0) return;
+    const box = document.createElement('div');
+    box.className = 'error';
+    box.setAttribute('role', 'alert');
+    const title = document.createElement('p');
+    title.textContent = `${labelOf(ch.id)}: há arquivos com problema.`;
+    box.append(title);
+    if (ch.missing.length) {
+      const intro = document.createElement('p');
+      intro.textContent = 'Não foi possível carregar:';
+      const list = document.createElement('ul');
+      for (const path of ch.missing) {
+        const li = document.createElement('li');
+        const code = document.createElement('code');
+        code.textContent = path;
+        li.append(code);
+        list.append(li);
+      }
+      const help = document.createElement('p');
+      help.textContent = 'Confira se o arquivo existe. Caminhos de imagem são relativos à pasta do manifesto.';
+      box.append(intro, list, help);
+    }
+    for (const problem of ch.problems) {
+      const p = document.createElement('p');
+      const code = document.createElement('code');
+      code.textContent = problem.path;
+      p.append(code, `: ${problem.text}`);
+      box.append(p);
+    }
+    statusEl.append(box);
+  }
+
+  function selectCharacter(ch) {
+    state.current = ch;
+    panelsEl.replaceChildren();
+    renderStatus(ch);
+    state.panels = ch.manifest && ch.sheet ? ch.manifest.animations.map((anim) => createPanel(ch, anim)) : [];
+    resizeCanvases();
+    syncToggleAll();
+  }
+
+  // ---- Loop and global controls ----
+
+  let lastTime = null;
+  function tick(now) {
+    const dt = lastTime === null ? 0 : Math.min(now - lastTime, MAX_FRAME_DELTA_MS);
+    lastTime = now;
+    for (const p of state.panels) {
+      if (p.playing) {
+        p.accumulator += dt;
+        const frameMs = 1000 / p.fps;
+        while (p.accumulator >= frameMs) {
+          p.accumulator -= frameMs;
+          p.frame = (p.frame + 1) % p.anim.frames;
+          p.dirty = true;
+        }
+      }
+      if (p.dirty) drawPanel(p);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function bindGlobalControls() {
+    characterSelect.addEventListener('change', () => {
+      const ch = state.characters[Number(characterSelect.value)];
+      storageSet(ch.id);
+      selectCharacter(ch);
+    });
+
+    toggleAllBtn.addEventListener('click', toggleAll);
+
+    zoomInput.addEventListener('input', () => {
+      state.zoom = clampInt(zoomInput.value, ZOOM_MIN, ZOOM_MAX, state.zoom);
+      zoomValue.textContent = `${state.zoom}x`;
+      resizeCanvases();
+    });
+
+    bgSelect.addEventListener('change', () => { root.dataset.bg = bgSelect.value; });
+
+    guidesInput.addEventListener('change', () => {
+      state.guides = guidesInput.checked;
+      for (const p of state.panels) p.dirty = true;
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code !== 'Space' || e.repeat) return;
+      const t = e.target;
+      if (t instanceof HTMLInputElement && (t.type === 'number' || t.type === 'text')) return;
+      if (t instanceof HTMLSelectElement) return;
+      e.preventDefault();
+      toggleAll();
+    });
+
+    let lastDpr = window.devicePixelRatio;
+    window.addEventListener('resize', () => {
+      if (window.devicePixelRatio === lastDpr) return;
+      lastDpr = window.devicePixelRatio;
+      resizeCanvases();
+    });
+  }
+
+  async function init() {
+    root.dataset.bg = bgSelect.value;
+    bindGlobalControls();
+    syncToggleAll();
+
+    for (const path of MANIFEST_PATHS) state.characters.push(await loadCharacter(path));
+
+    state.characters.forEach((ch, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = labelOf(ch.id);
+      characterSelect.append(opt);
+    });
+    characterSelect.disabled = false;
+
+    const savedId = storageGet();
+    const usable = (ch) => ch.manifest && ch.sheet;
+    const initial =
+      state.characters.find((ch) => ch.id === savedId) ??
+      state.characters.find(usable) ??
+      state.characters[0];
+    characterSelect.value = String(state.characters.indexOf(initial));
+    selectCharacter(initial);
+    requestAnimationFrame(tick);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

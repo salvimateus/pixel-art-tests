@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualizador de rig</title>
+<meta name="description" content="Visualizador local do rig esquelético do cavaleiro negro: animações, espelhamento, velocidade, ossos, hitboxes e modo de jogo.">
+<style>
+@layer reset, base, components;
+
+@layer reset {
+  :where(*, *::before, *::after) { box-sizing: border-box; margin: 0; }
+  :where(button, input, select) { font: inherit; color: inherit; }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --bg: oklch(0.18 0.01 260);
+    --surface: oklch(0.24 0.012 260);
+    --surface-2: oklch(0.3 0.014 260);
+    --border: oklch(0.38 0.014 260);
+    --text: oklch(0.96 0.005 260);
+    --muted: oklch(0.78 0.01 260);
+    --accent: oklch(0.8 0.15 150);
+    --accent-text: oklch(0.2 0.04 150);
+    --danger-bg: oklch(0.32 0.09 25);
+    --danger-border: oklch(0.6 0.16 25);
+    --stage: oklch(0.14 0.005 260);
+    --radius: 0.5rem;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    line-height: 1.4;
+    padding: 1rem;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+
+@layer components {
+  .page-header { display: grid; gap: 0.75rem; margin-block-end: 1rem; }
+  .page-title { font-size: clamp(1.15rem, 1rem + 1vw, 1.6rem); }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .field { display: inline-flex; gap: 0.4rem; align-items: center; color: var(--muted); }
+  .select, .btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.35rem 0.6rem;
+    min-height: 2.25rem;
+  }
+  .btn { cursor: pointer; }
+  .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .range { inline-size: 7rem; accent-color: var(--accent); }
+  .value { min-inline-size: 3.2ch; color: var(--text); font-variant-numeric: tabular-nums; }
+  .stage {
+    position: relative;
+    block-size: min(70dvh, 46rem);
+    background: var(--stage);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    outline: none;
+  }
+  .stage-canvas { display: block; inline-size: 100%; block-size: 100%; image-rendering: pixelated; }
+  .status { margin-block-start: 0.6rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .help { margin-block-start: 0.4rem; color: var(--muted); font-size: 0.9rem; }
+  .error {
+    margin-block-end: 1rem;
+    padding: 0.75rem;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius);
+  }
+  kbd {
+    padding: 0 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    background: var(--surface-2);
+    font-size: 0.85em;
+  }
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <h1 class="page-title">Visualizador de rig</h1>
+  <div class="toolbar">
+    <label class="field">Modo
+      <select class="select" id="mode">
+        <option value="preview">Animação</option>
+        <option value="play">Jogar</option>
+      </select>
+    </label>
+    <label class="field">Animação <select class="select" id="anim"></select></label>
+    <button type="button" class="btn" id="facing" aria-pressed="false">Virar para a esquerda</button>
+    <button type="button" class="btn" id="pause" aria-pressed="false">Pausar</button>
+    <label class="field">Velocidade
+      <input type="range" class="range" id="speed" min="0.1" max="2" step="0.05" value="1">
+      <span class="value" id="speed-value">1x</span>
+    </label>
+    <label class="field">Zoom
+      <input type="range" class="range" id="zoom" min="1" max="8" step="1" value="3">
+      <span class="value" id="zoom-value">3x</span>
+    </label>
+    <label class="field"><input type="checkbox" id="bones"> Ossos</label>
+    <label class="field"><input type="checkbox" id="stepped" checked> Segurar quadros (fps)</label>
+  </div>
+</header>
+
+<div id="errors"></div>
+<div class="stage" id="stage" tabindex="0"><canvas class="stage-canvas" id="canvas"></canvas></div>
+<p class="status" id="status" aria-live="off"></p>
+<p class="help">Modo Jogar: <kbd>A</kbd>/<kbd>D</kbd> andam, <kbd>Shift</kbd> + <kbd>A</kbd>/<kbd>D</kbd> correm, <kbd>Espaço</kbd> pula, <kbd>S</kbd> agacha (segure), <kbd>J</kbd> ataca, <kbd>K</kbd> defende (segure), <kbd>H</kbd> toca dano, <kbd>L</kbd> toca morte, <kbd>R</kbd> reinicia. Clique no palco antes de jogar. Com Ossos ligado, os retângulos vermelhos são as hitboxes do golpe.</p>
+
+<script src="rig-runtime.js"></script>
+<script>
+(() => {
+  // ?manifest=<path> loads another rig manifest. Image paths are relative to the manifest folder.
+  const DEFAULT_MANIFEST = 'assets/black-knight/black-knight-rig.manifest.js';
+  const GRAVITY = 900;    // art px / s^2
+  const JUMP_SPEED = 270; // art px / s
+  const GROUND_TICK = 16; // art px between ground marks
+  const MAX_DT = 0.1;
+
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('canvas');
+  const ctx = canvas.getContext('2d');
+  const ui = {
+    mode: $('mode'), anim: $('anim'), facing: $('facing'), pause: $('pause'), speed: $('speed'),
+    speedValue: $('speed-value'), zoom: $('zoom'), zoomValue: $('zoom-value'), bones: $('bones'),
+    stepped: $('stepped'), status: $('status'), stage: $('stage'), errors: $('errors'),
+  };
+
+  const state = {
+    rig: null, inst: null, facing: 1, paused: false, speed: 1, zoom: 3, bones: false,
+    mode: 'preview', keys: new Set(),
+    actor: { x: 0, y: 0, vy: 0, state: 'ground', dir: 0, run: false },
+  };
+
+  function showError(text) {
+    const box = document.createElement('div');
+    box.className = 'error';
+    box.textContent = text;
+    ui.errors.append(box);
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.head.append(s);
+    });
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  const dirOf = (path) => path.slice(0, path.lastIndexOf('/') + 1);
+
+  // ---- play mode ----
+
+  const anims = () => state.rig.anims;
+  const locoSpeed = (name) => (anims()[name]?.stride ?? 0) / (anims()[name]?.duration || 1);
+
+  function resetActor() {
+    Object.assign(state.actor, { x: 0, y: 0, vy: 0, state: 'ground', dir: 0, run: false });
+    state.inst.play('idle', { restart: true });
+  }
+
+  function phaseRange(name, phase) {
+    return anims()[name]?.phases?.[phase];
+  }
+
+  // Keys by event.code, so Shift and the keyboard layout never change them.
+  const CODES = ['KeyA', 'KeyD', 'KeyS', 'KeyJ', 'KeyK', 'KeyH', 'KeyL', 'KeyR', 'Space', 'ShiftLeft', 'ShiftRight'];
+  // Held actions: the entry phase plays once, the hold phase loops while the key is held, then the exit phase.
+  const HOLDS = { KeyS: { anim: 'crouch', hold: 'hold', exit: 'up' }, KeyK: { anim: 'block', hold: 'hold', exit: 'lower' } };
+  const BUSY = new Set(['hurt', 'dead', 'attack', 'hold']);
+
+  function onKey(e, down) {
+    if (state.mode !== 'play') return;
+    if (!CODES.includes(e.code)) return;
+    e.preventDefault();
+    if (down) state.keys.add(e.code); else state.keys.delete(e.code);
+    if (!down || e.repeat) return;
+    const a = state.actor;
+    const inst = state.inst;
+    if (e.code === 'KeyR') { resetActor(); return; }
+    if (a.state === 'dead') return;
+    if (e.code === 'KeyL') {
+      a.state = 'dead';
+      a.y = 0;
+      inst.play('death', { restart: true });
+    } else if (e.code === 'KeyH' && (a.state === 'ground' || a.state === 'hold' || a.state === 'attack')) {
+      a.state = 'hurt';
+      inst.play('hurt', { restart: true });
+    } else if (a.state !== 'ground') {
+      // Jump, attack, crouch and block start only from the ground.
+    } else if (e.code === 'Space') {
+      a.state = 'takeoff';
+      a.jumpRun = isRunning() && a.dir !== 0;
+      inst.play('jump', { restart: true });
+    } else if (e.code === 'KeyJ') {
+      a.state = 'attack';
+      inst.play('attack', { restart: true });
+    } else if (HOLDS[e.code] && anims()[HOLDS[e.code].anim]) {
+      a.state = 'hold';
+      a.hold = { code: e.code, ...HOLDS[e.code] };
+      inst.play(a.hold.anim, { restart: true });
+    }
+  }
+
+  const isRunning = () => state.keys.has('ShiftLeft') || state.keys.has('ShiftRight');
+
+  function stepHold(dt) {
+    const a = state.actor;
+    const inst = state.inst;
+    const { fps } = inst.anim;
+    const [h0, h1] = phaseRange(a.hold.anim, a.hold.hold);
+    const [e0] = phaseRange(a.hold.anim, a.hold.exit);
+    inst.update(dt);
+    if (state.keys.has(a.hold.code)) {
+      const loopEnd = (h1 + 1) / fps;
+      if (inst.time >= loopEnd) inst.time = h0 / fps + ((inst.time - h0 / fps) % (loopEnd - h0 / fps));
+    } else if (inst.time >= h0 / fps && inst.time < e0 / fps) {
+      inst.time = e0 / fps;
+    }
+    if (inst.finished) a.state = 'ground';
+  }
+
+  function stepPlay(dt) {
+    const a = state.actor;
+    const inst = state.inst;
+    const keys = state.keys;
+    a.dir = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
+    if (BUSY.has(a.state)) a.dir = 0;
+    if (a.dir && a.dir !== state.facing) {
+      state.facing = a.dir;
+      syncFacing();
+    }
+
+    let move = 0;
+    if (a.state === 'ground') {
+      const name = a.dir ? (isRunning() ? 'sprint' : 'walk') : 'idle';
+      inst.play(name, { keepPhase: true });
+      inst.update(dt);
+      move = a.dir * locoSpeed(name);
+    } else if (a.state === 'takeoff') {
+      inst.update(dt);
+      const [, last] = phaseRange('jump', 'takeoff');
+      if (inst.time >= (last + 1) / inst.anim.fps) {
+        a.state = 'air';
+        a.vy = JUMP_SPEED;
+      }
+    } else if (a.state === 'air') {
+      a.vy -= GRAVITY * dt;
+      a.y += a.vy * dt;
+      move = a.dir * locoSpeed(a.jumpRun ? 'sprint' : 'walk');
+      const [first, last] = phaseRange('jump', 'air');
+      const u = Math.min(0.999, Math.max(0, (JUMP_SPEED - a.vy) / (2 * JUMP_SPEED)));
+      inst.time = (first + u * (last - first + 1)) / inst.anim.fps;
+      if (a.y <= 0 && a.vy < 0) {
+        a.y = 0;
+        a.state = 'land';
+        inst.time = phaseRange('jump', 'land')[0] / inst.anim.fps;
+      }
+    } else if (a.state === 'hold') {
+      stepHold(dt);
+    } else if (a.state === 'land' || a.state === 'hurt' || a.state === 'attack') {
+      inst.update(dt);
+      if (inst.finished) a.state = 'ground';
+    } else if (a.state === 'dead') {
+      inst.update(dt);
+    }
+    a.x += move * dt;
+    a.move = move;
+  }
+
+  // ---- drawing ----
+
+  function pixelScale() {
+    return state.zoom * Math.max(1, Math.round(devicePixelRatio || 1));
+  }
+
+  function resize() {
+    const dpr = devicePixelRatio || 1;
+    const r = ui.stage.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width * dpr));
+    const h = Math.max(1, Math.round(r.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+  }
+
+  function draw() {
+    resize();
+    const s = pixelScale();
+    const cols = Math.floor(canvas.width / s);
+    const rows = Math.floor(canvas.height / s);
+    const groundY = Math.round(rows * 0.82);
+    const inst = state.inst;
+    const a = state.actor;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let x = Math.floor(cols / 2);
+    let y = groundY;
+    if (state.mode === 'play') {
+      // Hold the drawn position with the held frame, so the planted foot does not slide inside a frame.
+      const lag = inst.stepped && a.state === 'ground' ? (inst.time - inst.sampleTime()) * a.move : 0;
+      // The stage wraps: x stays in [0, cols), and a copy one stage width away fills the edge it crosses.
+      x = (((a.x - lag + cols / 2) % cols) + cols) % cols;
+      y = groundY - a.y;
+    }
+
+    ctx.fillStyle = 'oklch(0.3 0.02 150)';
+    ctx.fillRect(0, groundY * s, canvas.width, Math.max(1, s));
+    ctx.fillStyle = 'oklch(0.55 0.08 150)';
+    for (let gx = 0; gx < cols; gx += GROUND_TICK) ctx.fillRect(gx * s, groundY * s, Math.max(1, s), 3 * s);
+
+    inst.render();
+    inst.draw(ctx, x, y, s, state.facing);
+    if (state.mode === 'play') {
+      inst.draw(ctx, x - cols, y, s, state.facing);
+      inst.draw(ctx, x + cols, y, s, state.facing);
+    }
+    if (state.bones) {
+      inst.drawBones(ctx, x, y, s, state.facing);
+      drawHitboxes(x, y, s);
+    }
+
+    const an = inst.anim;
+    const phase = inst.phase();
+    ui.status.textContent = `${an.name}  quadro ${inst.frameIndex() + 1}/${an.frames}  ${an.fps} fps` +
+      (phase ? `  fase ${phase}` : '') + (an.stride ? `  stride ${an.stride} px` : '') +
+      (state.mode === 'play' ? `  x ${Math.round(a.x)}` : '');
+  }
+
+  // Baked hit rects (frame coords, facing +x) of the current frame, mirrored with the facing.
+  function drawHitboxes(x, y, s) {
+    const inst = state.inst;
+    const boxes = inst.anim.hitboxes?.[inst.frameIndex()];
+    if (!boxes) return;
+    const { pivot } = state.rig.manifest;
+    const rx = Math.round(x);
+    const ry = Math.round(y);
+    ctx.save();
+    ctx.strokeStyle = 'rgb(255 80 80)';
+    ctx.lineWidth = Math.max(1, s / 3);
+    for (const r of boxes) {
+      const mx = r.x - pivot.x;
+      const left = state.facing > 0 ? rx + mx : rx - mx - r.w;
+      ctx.strokeRect(left * s, (ry + r.y - pivot.y) * s, r.w * s, r.h * s);
+    }
+    ctx.restore();
+  }
+
+  let last = null;
+  function tick(now) {
+    const dt = last === null ? 0 : Math.min(MAX_DT, (now - last) / 1000);
+    last = now;
+    if (state.inst) {
+      const sdt = state.paused ? 0 : dt * state.speed;
+      if (state.mode === 'play') stepPlay(sdt);
+      else state.inst.update(sdt);
+      draw();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ---- controls ----
+
+  function syncFacing() {
+    ui.facing.setAttribute('aria-pressed', String(state.facing < 0));
+  }
+
+  function bind() {
+    ui.mode.addEventListener('change', () => {
+      state.mode = ui.mode.value;
+      ui.anim.disabled = state.mode === 'play';
+      if (state.mode === 'play') {
+        resetActor();
+        ui.stage.focus();
+      } else {
+        state.inst.play(ui.anim.value, { restart: true });
+      }
+    });
+    ui.anim.addEventListener('change', () => state.inst.play(ui.anim.value, { restart: true }));
+    ui.facing.addEventListener('click', () => { state.facing = -state.facing; syncFacing(); });
+    ui.pause.addEventListener('click', () => {
+      state.paused = !state.paused;
+      ui.pause.setAttribute('aria-pressed', String(state.paused));
+    });
+    ui.speed.addEventListener('input', () => {
+      state.speed = Number(ui.speed.value);
+      ui.speedValue.textContent = `${state.speed}x`;
+    });
+    ui.zoom.addEventListener('input', () => {
+      state.zoom = Math.round(Number(ui.zoom.value));
+      ui.zoomValue.textContent = `${state.zoom}x`;
+    });
+    ui.bones.addEventListener('change', () => { state.bones = ui.bones.checked; });
+    ui.stepped.addEventListener('change', () => { state.inst.stepped = ui.stepped.checked; });
+    // Preview mode: a finished one-shot restarts after a short hold.
+    setInterval(() => {
+      if (state.mode === 'preview' && state.inst?.finished && !state.paused) {
+        state.inst.play(state.inst.anim.name, { restart: true });
+      }
+    }, 1200);
+    addEventListener('keydown', (e) => onKey(e, true));
+    addEventListener('keyup', (e) => onKey(e, false));
+    addEventListener('blur', () => state.keys.clear());
+  }
+
+  async function init() {
+    bind();
+    const path = new URLSearchParams(location.search).get('manifest') || DEFAULT_MANIFEST;
+    const registry = (window.SPRITE_RIGS ??= {});
+    const before = new Set(Object.keys(registry));
+    if (!(await loadScript(path))) {
+      showError(`Manifesto não encontrado: ${path}. Rode python3 tools/make-rig-assets.py black-knight.`);
+      return;
+    }
+    const id = Object.keys(registry).find((k) => !before.has(k)) ?? Object.keys(registry)[0];
+    const manifest = registry[id];
+    if (!manifest?.bones || !manifest?.parts || !manifest?.animations) {
+      showError(`${path}: o manifesto não tem bones, parts e animations.`);
+      return;
+    }
+    const image = await loadImage(dirOf(path) + manifest.image);
+    if (!image) {
+      showError(`Atlas não encontrado: ${dirOf(path) + manifest.image}. Caminhos de imagem são relativos à pasta do manifesto.`);
+      return;
+    }
+    state.rig = RigRuntime.createRig(manifest, image);
+    state.inst = RigRuntime.createInstance(state.rig);
+    state.inst.stepped = ui.stepped.checked;
+    for (const name of Object.keys(manifest.animations)) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      ui.anim.append(opt);
+    }
+    ui.anim.value = manifest.animations.idle ? 'idle' : Object.keys(manifest.animations)[0];
+    state.inst.play(ui.anim.value, { restart: true });
+    requestAnimationFrame(tick);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
