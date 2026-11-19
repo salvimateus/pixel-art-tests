@@ -1,0 +1,62 @@
+Animate the provided reference image into a high-quality 2D pixel-art sprite animation.
+
+ACTION:
+Walk in place with a natural, clearly visible walking cycle. Legs alternate steps, the arms swing slightly, the sword stays in the right hand and the shield stays on the left arm.
+Facing: screen-right, the same three-quarter view as the reference. Keep this facing direction in every frame.
+Animate in place: the body does not travel across the frame.
+
+TIMING:
+One cycle in 1 s. Key poses in this order:
+1. the right leg lifts and steps forward
+2. the right foot plants, the left leg passes under the body
+3. the left foot steps forward
+4. the body returns to the exact reference pose
+
+CHARACTER CONSISTENCY:
+Treat the reference image as the definitive visual source.
+Preserve identity, anatomy, proportions, colors, face, clothing, accessories and details.
+Never redesign, replace or add anatomy, limbs, accessories or objects.
+Keep shapes, colors and details consistent in every frame.
+Allow articulation and deformation only where the action needs it.
+
+ANIMATION QUALITY:
+Clear, readable movement with distinct key poses and natural transitions.
+No excessively subtle motion, no exaggerated motion, no random movement.
+Use motion mechanics that fit the anatomy and weight of the subject.
+Keep body volume constant. No morphing, no distortion, no visual instability.
+
+PHYSICAL COHERENCE:
+Respect gravity, weight, inertia and contact.
+Keep grounded subjects on their implied ground line: no floating, sliding or sinking.
+
+STRICT CAMERA LOCK:
+Static camera: no zoom, pan, tilt, rotation, tracking or perspective change.
+Keep the exact viewing angle and the subject scale in every frame.
+
+STRICT FRAME CONTAINMENT:
+Keep the full subject inside the frame in every frame, with safe padding.
+No body part, weapon or effect crosses the frame edge.
+Keep the subject at the same position and size, for sprite sheet extraction.
+
+PIXEL-ART PRESERVATION:
+Keep the exact pixel-art style: crisp square pixels, same pixel size, stable outlines.
+Keep the original palette and shading.
+No motion blur, smoothing, anti-aliasing, flicker, glow or style change.
+
+CHROMA KEY BACKGROUND:
+Solid uniform #FF00FF background in every frame, the same as the reference image.
+No gradient, shadow, floor, reflection, noise, light change or scenery.
+The background never changes with the animation.
+
+SEAMLESS LOOP:
+Exactly one complete animation cycle. No second cycle, no pause.
+The last frame is the same image as the first frame. Move away from it and return to it smoothly.
+No abrupt transition and no flicker at the seam.
+
+PRIORITY ORDER:
+1. Exact character identity. 2. Correct, readable movement. 3. Physical coherence.
+4. Frame containment. 5. Pixel-art style. 6. Seamless loop.
+
+CRITICAL RULE:
+Preserve WHAT the character is. Let HOW the character moves change.
+Never sacrifice identity for movement. Never remove meaningful movement to keep the pose.

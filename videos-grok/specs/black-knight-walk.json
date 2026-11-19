@@ -1,0 +1,12 @@
+{
+  "action": "Walk in place with a natural, clearly visible walking cycle. Legs alternate steps, the arms swing slightly, the sword stays in the right hand and the shield stays on the left arm.",
+  "beats": [
+    "the right leg lifts and steps forward",
+    "the right foot plants, the left leg passes under the body",
+    "the left foot steps forward",
+    "the body returns to the exact reference pose"
+  ],
+  "facing": "screen-right, the same three-quarter view as the reference",
+  "loop": true,
+  "duration_s": 1
+}

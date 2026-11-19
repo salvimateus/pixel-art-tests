@@ -1,0 +1,124 @@
+{
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-v2.mp4",
+  "hash": "6a510e6cb114c6b98d8d71e1aaaf2b8284a843d6e8f22441e294092d1287da68",
+  "model": "grok-imagine-video-1.5",
+  "endpoint": "POST /v1/videos/generations",
+  "parameters": {
+    "model": "grok-imagine-video-1.5",
+    "duration": 2,
+    "resolution": "480p",
+    "generate_audio": false
+  },
+  "spec_file": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/specs/ratcatcher-walk-v2.json",
+  "spec": {
+    "subject": "An undercity ratcatcher in pixel art. The torso is in a front three-quarter view; the head and the feet are in profile and point to screen-right. One trouser leg has a brown patch and the other trouser leg has a grey patch. One hand holds a short hooked blade; the other hand is empty.",
+    "action": "The ratcatcher does a game walk cycle, like a walk on a treadmill. He takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms swing a little, opposite to the legs.",
+    "beats": [
+      {
+        "at": "0-1 s",
+        "pose": "the leg with the brown patch swings forward past the other leg and lands on its heel in front, while the foot of the leg with the grey patch slides back behind the body; the blade hand swings to the front and the empty hand swings behind"
+      },
+      {
+        "at": "1-2 s",
+        "pose": "the leg with the grey patch swings forward past the other leg and lands on its heel in front, while the foot of the leg with the brown patch slides back behind the body; the empty hand swings to the front and the blade hand swings behind"
+      }
+    ],
+    "keep": [
+      "The rust-orange scarf keeps its frayed end with 3 to 4 thin loose threads that hang down behind the shoulder in every frame.",
+      "The small brass lantern hangs on its short chain from the front of the belt, with a yellow light in its glass, in every frame.",
+      "One hand holds the short hooked blade low, with the curved blade pointing down, in every frame."
+    ],
+    "facing": "screen-right",
+    "loop": true,
+    "duration_s": 2,
+    "room": {
+      "left": 0.15,
+      "right": 0.15,
+      "top": 0.05,
+      "bottom": 0.05
+    }
+  },
+  "prompt": "Animate the pixel-art game character of the first frame. The ratcatcher does a game walk cycle, like a walk on a treadmill. He takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms swing a little, opposite to the legs.\nSubject: An undercity ratcatcher in pixel art. The torso is in a front three-quarter view; the head and the feet are in profile and point to screen-right. One trouser leg has a brown patch and the other trouser leg has a grey patch. One hand holds a short hooked blade; the other hand is empty.\nThe character faces screen-right for the whole clip and never turns.\nThe body stays at the same spot in the picture.\n\nOne cycle in 2 s, in this order:\n1. 0-1 s: the leg with the brown patch swings forward past the other leg and lands on its heel in front, while the foot of the leg with the grey patch slides back behind the body; the blade hand swings to the front and the empty hand swings behind\n2. 1-2 s: the leg with the grey patch swings forward past the other leg and lands on its heel in front, while the foot of the leg with the brown patch slides back behind the body; the empty hand swings to the front and the blade hand swings behind\n\nThe keyframe images are exact poses. The motion goes through each one.\n\nThe clip is exactly one cycle, with no pause and no second cycle. The last frame is the first frame again: the motion leaves that pose and comes back to it.\n\nThe character stays exactly as in the first frame: the same design, proportions, colors, equipment and small details, at the same size.\nOnly the pose changes. No part appears, disappears or changes shape.\nThe rust-orange scarf keeps its frayed end with 3 to 4 thin loose threads that hang down behind the shoulder in every frame.\nThe small brass lantern hangs on its short chain from the front of the belt, with a yellow light in its glass, in every frame.\nOne hand holds the short hooked blade low, with the curved blade pointing down, in every frame.\n\nLocked static camera, no zoom, no pan. The full character stays inside the picture. The feet stay on the same ground line.\n\nSame pixel-art style as the first frame: hard pixel edges and the same palette. Every moment is sharp, with no motion blur.\nThe background stays flat solid blue (#0000FF) for the whole clip: no floor, no shadow, no gradient, no effects.\n",
+  "prep": {
+    "source": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near-unslop.png",
+    "prepared": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-v2-inputs/first.png",
+    "chroma": "#0000FF",
+    "chroma_min_distance": 0.317,
+    "sprite_size": {
+      "w": 104,
+      "h": 196
+    },
+    "scale": 3,
+    "canvas": {
+      "w": 480,
+      "h": 720
+    },
+    "canvas_mode": "standard ratio (inferred 1.5 output size)",
+    "sprite_offset": {
+      "x": 84,
+      "y": 66
+    },
+    "resolution": "480p"
+  },
+  "last_frame": "same",
+  "keyframes": [
+    {
+      "time_s": 1,
+      "source": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-far-v2-v2-unslop.png"
+    }
+  ],
+  "inputs_dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-v2-inputs",
+  "estimated_cost_usd": 0.1900,
+  "frames_step": {
+    "enabled": true,
+    "fps": 12.267,
+    "cycle": "loop",
+    "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-v2-inputs/sprite-hard-alpha.png",
+    "dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-v2-frames",
+    "frame_count": 23,
+    "frame_size": {
+      "w": 109,
+      "h": 207
+    },
+    "canvas": {
+      "w": 2617,
+      "h": 1864,
+      "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+    },
+    "art_pixel_size": 3.0013,
+    "grid_quality": 3
+  },
+  "prompt_override": null,
+  "request_id": "f2bbb76d-b8df-9d90-8817-11ce4af0c8ab",
+  "status": "done",
+  "sent_at": "2026-11-19T19:11:22Z",
+  "response": {
+    "status": "done",
+    "video": {
+      "duration": 2,
+      "respect_moderation": true
+    },
+    "model": "grok-imagine-video-1.5",
+    "usage": {
+      "cost_in_usd_ticks": 1900000000
+    },
+    "progress": 100
+  },
+  "usage": {
+    "cost_in_usd_ticks": 1900000000
+  },
+  "cost_usd": 0.190000,
+  "video": {
+    "width": 480,
+    "height": 720,
+    "fps": "24/1",
+    "duration_s": 2.041667
+  },
+  "video_vs_first_frame": {
+    "first_frame": "480x720",
+    "video": "480x720",
+    "scale_x": 1,
+    "scale_y": 1,
+    "same_size": true
+  }
+}

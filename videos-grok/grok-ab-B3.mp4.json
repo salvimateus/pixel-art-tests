@@ -1,0 +1,120 @@
+{
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-B3.mp4",
+  "hash": "b155a19c92fe072ab0b98e01780df9db6c74f2fc42c5c04be93f54d597502962",
+  "model": "grok-imagine-video-1.5-lite",
+  "endpoint": "POST /v1/videos/generations",
+  "parameters": {
+    "model": "grok-imagine-video-1.5-lite",
+    "duration": 1,
+    "resolution": "480p",
+    "generate_audio": false
+  },
+  "spec_file": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/specs/black-knight-walk-v2.json",
+  "spec": {
+    "action": "The knight does a game walk cycle in side view, like a walk on a treadmill. The knight takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms move only a little. The sword stays level and points forward, and the shield stays in front of the body.",
+    "beats": [
+      {
+        "at": "0-0.5 s",
+        "pose": "the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body"
+      },
+      {
+        "at": "0.5-1 s",
+        "pose": "the near leg swings forward past the far leg and lands in front, while the far foot slides back"
+      }
+    ],
+    "keep": [
+      "The red tabard keeps its torn hem with pointed tatters in every frame.",
+      "The shield keeps its gold eagle on a black field."
+    ],
+    "facing": "screen-right",
+    "loop": true,
+    "duration_s": 1
+  },
+  "prompt": "Animate the pixel-art game character of the first frame. The knight does a game walk cycle in side view, like a walk on a treadmill. The knight takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms move only a little. The sword stays level and points forward, and the shield stays in front of the body.\nThe character faces screen-right for the whole clip and never turns.\nThe body stays at the same spot in the picture.\n\nOne cycle in 1 s, in this order:\n1. 0-0.5 s: the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body\n2. 0.5-1 s: the near leg swings forward past the far leg and lands in front, while the far foot slides back\n\nThe clip is exactly one cycle, with no pause and no second cycle. It ends in the exact pose of the first frame.\n\nThe character stays exactly as in the first frame: the same design, proportions, colors, equipment and small details, at the same size.\nOnly the pose changes. No part appears, disappears or changes shape.\nThe red tabard keeps its torn hem with pointed tatters in every frame.\nThe shield keeps its gold eagle on a black field.\n\nLocked static camera, no zoom, no pan. The full character stays inside the picture. The feet stay on the same ground line.\n\nSame pixel-art style as the first frame: hard pixel edges and the same palette. Every moment is sharp, with no motion blur.\nThe background stays flat solid magenta (#FF00FF) for the whole clip: no floor, no shadow, no gradient, no effects.\n",
+  "prep": {
+    "source": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-base-fixed.png",
+    "prepared": "/tmp/tmp.znmANbVssf/first.png",
+    "chroma": "#FF00FF",
+    "chroma_min_distance": 180,
+    "sprite_size": {
+      "w": 80,
+      "h": 152
+    },
+    "scale": 3,
+    "canvas": {
+      "w": 400,
+      "h": 752
+    },
+    "canvas_mode": "free ratio (Lite keeps it)",
+    "sprite_offset": {
+      "x": 80,
+      "y": 148
+    },
+    "resolution": "480p"
+  },
+  "last_frame": "none",
+  "keyframes": [],
+  "inputs_dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-B3-inputs",
+  "estimated_cost_usd": 0.0300,
+  "frames_step": {
+    "enabled": true,
+    "fps": 12,
+    "cycle": {
+      "mode": "loop",
+      "closing_distance": 0.358,
+      "warning": "the loop does not close",
+      "used_video_frames": [
+        0,
+        23
+      ],
+      "mean_motion": 0.0365
+    },
+    "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-B3-inputs/sprite-hard-alpha.png",
+    "dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-B3-frames",
+    "frame_count": 12,
+    "frame_size": {
+      "w": 106,
+      "h": 157
+    },
+    "canvas": {
+      "w": 1931,
+      "h": 953,
+      "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+    },
+    "art_pixel_size": 3.0357,
+    "grid_quality": 3
+  },
+  "prompt_override": null,
+  "request_id": "853c591a-bbb5-97fc-91a6-eb2d61a51320",
+  "status": "done",
+  "sent_at": "2026-11-19T18:22:36Z",
+  "response": {
+    "status": "done",
+    "video": {
+      "duration": 1,
+      "respect_moderation": true
+    },
+    "model": "grok-imagine-video-1.5-lite",
+    "usage": {
+      "cost_in_usd_ticks": 300000000
+    },
+    "progress": 100
+  },
+  "usage": {
+    "cost_in_usd_ticks": 300000000
+  },
+  "cost_usd": 0.030000,
+  "video": {
+    "width": 400,
+    "height": 752,
+    "fps": "24/1",
+    "duration_s": 1.041667
+  },
+  "video_vs_first_frame": {
+    "first_frame": "400x752",
+    "video": "400x752",
+    "scale_x": 1,
+    "scale_y": 1,
+    "same_size": true
+  }
+}

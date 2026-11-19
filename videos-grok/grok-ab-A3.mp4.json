@@ -1,0 +1,112 @@
+{
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A3.mp4",
+  "hash": "d78e592d229eb8dc864b78a2a72552176fdf5a367eb890df508409def1212327",
+  "model": "grok-imagine-video-1.5-lite",
+  "endpoint": "POST /v1/videos/generations",
+  "parameters": {
+    "model": "grok-imagine-video-1.5-lite",
+    "duration": 1,
+    "resolution": "480p",
+    "generate_audio": false
+  },
+  "spec_file": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/specs/black-knight-walk.json",
+  "spec": {
+    "action": "Walk in place with a natural, clearly visible walking cycle. Legs alternate steps, the arms swing slightly, the sword stays in the right hand and the shield stays on the left arm.",
+    "beats": [
+      "the right leg lifts and steps forward",
+      "the right foot plants, the left leg passes under the body",
+      "the left foot steps forward",
+      "the body returns to the exact reference pose"
+    ],
+    "facing": "screen-right, the same three-quarter view as the reference",
+    "loop": true,
+    "duration_s": 1
+  },
+  "prompt": "Animate the provided reference image into a high-quality 2D pixel-art sprite animation.\n\nACTION:\nWalk in place with a natural, clearly visible walking cycle. Legs alternate steps, the arms swing slightly, the sword stays in the right hand and the shield stays on the left arm.\nFacing: screen-right, the same three-quarter view as the reference. Keep this facing direction in every frame.\nAnimate in place: the body does not travel across the frame.\n\nTIMING:\nOne cycle in 1 s. Key poses in this order:\n1. the right leg lifts and steps forward\n2. the right foot plants, the left leg passes under the body\n3. the left foot steps forward\n4. the body returns to the exact reference pose\n\nCHARACTER CONSISTENCY:\nTreat the reference image as the definitive visual source.\nPreserve identity, anatomy, proportions, colors, face, clothing, accessories and details.\nNever redesign, replace or add anatomy, limbs, accessories or objects.\nKeep shapes, colors and details consistent in every frame.\nAllow articulation and deformation only where the action needs it.\n\nANIMATION QUALITY:\nClear, readable movement with distinct key poses and natural transitions.\nNo excessively subtle motion, no exaggerated motion, no random movement.\nUse motion mechanics that fit the anatomy and weight of the subject.\nKeep body volume constant. No morphing, no distortion, no visual instability.\n\nPHYSICAL COHERENCE:\nRespect gravity, weight, inertia and contact.\nKeep grounded subjects on their implied ground line: no floating, sliding or sinking.\n\nSTRICT CAMERA LOCK:\nStatic camera: no zoom, pan, tilt, rotation, tracking or perspective change.\nKeep the exact viewing angle and the subject scale in every frame.\n\nSTRICT FRAME CONTAINMENT:\nKeep the full subject inside the frame in every frame, with safe padding.\nNo body part, weapon or effect crosses the frame edge.\nKeep the subject at the same position and size, for sprite sheet extraction.\n\nPIXEL-ART PRESERVATION:\nKeep the exact pixel-art style: crisp square pixels, same pixel size, stable outlines.\nKeep the original palette and shading.\nNo motion blur, smoothing, anti-aliasing, flicker, glow or style change.\n\nCHROMA KEY BACKGROUND:\nSolid uniform #FF00FF background in every frame, the same as the reference image.\nNo gradient, shadow, floor, reflection, noise, light change or scenery.\nThe background never changes with the animation.\n\nSEAMLESS LOOP:\nExactly one complete animation cycle. No second cycle, no pause.\nEnd on the exact starting pose, so the cycle repeats with no visible seam.\nNo abrupt transition and no flicker at the seam.\n\nPRIORITY ORDER:\n1. Exact character identity. 2. Correct, readable movement. 3. Physical coherence.\n4. Frame containment. 5. Pixel-art style. 6. Seamless loop.\n\nCRITICAL RULE:\nPreserve WHAT the character is. Let HOW the character moves change.\nNever sacrifice identity for movement. Never remove meaningful movement to keep the pose.\n",
+  "prep": {
+    "source": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/black-knight/black-knight-base-fixed.png",
+    "prepared": "/tmp/tmp.oUWKSDCVIy/first.png",
+    "chroma": "#FF00FF",
+    "chroma_min_distance": 180,
+    "sprite_size": {
+      "w": 80,
+      "h": 152
+    },
+    "scale": 3,
+    "canvas": {
+      "w": 400,
+      "h": 752
+    },
+    "canvas_mode": "free ratio (Lite keeps it)",
+    "sprite_offset": {
+      "x": 80,
+      "y": 148
+    },
+    "resolution": "480p"
+  },
+  "last_frame": "none",
+  "keyframes": [],
+  "inputs_dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A3-inputs",
+  "estimated_cost_usd": 0.0300,
+  "frames_step": {
+    "enabled": true,
+    "fps": 12,
+    "cycle": {
+      "mode": "loop",
+      "closing_distance": 0.1744,
+      "warning": "the loop does not close",
+      "used_video_frames": [
+        0,
+        23
+      ],
+      "mean_motion": 0.0729
+    },
+    "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A3-inputs/sprite-hard-alpha.png",
+    "dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A3-frames",
+    "frame_count": 12,
+    "frame_size": {
+      "w": 117,
+      "h": 156
+    },
+    "canvas": {
+      "w": 2131,
+      "h": 947,
+      "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+    },
+    "art_pixel_size": 3.0356,
+    "grid_quality": 3
+  },
+  "prompt_override": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/specs/black-knight-walk-old-prompt.txt",
+  "request_id": "26f2ce89-65d3-9709-bd92-683f1d7a13de",
+  "status": "done",
+  "sent_at": "2026-11-19T18:22:08Z",
+  "response": {
+    "status": "done",
+    "video": {
+      "duration": 1,
+      "respect_moderation": true
+    },
+    "model": "grok-imagine-video-1.5-lite",
+    "usage": {
+      "cost_in_usd_ticks": 300000000
+    },
+    "progress": 100
+  },
+  "usage": {
+    "cost_in_usd_ticks": 300000000
+  },
+  "cost_usd": 0.030000,
+  "video": {
+    "width": 400,
+    "height": 752,
+    "fps": "24/1",
+    "duration_s": 1.041667
+  },
+  "video_vs_first_frame": {
+    "first_frame": "400x752",
+    "video": "400x752",
+    "scale_x": 1,
+    "scale_y": 1,
+    "same_size": true
+  }
+}

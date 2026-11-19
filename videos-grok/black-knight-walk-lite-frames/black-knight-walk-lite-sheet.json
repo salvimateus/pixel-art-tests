@@ -1,0 +1,188 @@
+{
+  "format": "grok-video-frames/1",
+  "name": "black-knight-walk-lite",
+  "source_video": {
+    "path": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite.mp4",
+    "width": 400,
+    "height": 752,
+    "fps": 24,
+    "frames": 25
+  },
+  "cycle": {
+    "mode": "loop",
+    "start_frame": 2,
+    "end_frame": 24,
+    "period_s": 0.917,
+    "closing_distance": 0.0088,
+    "close_threshold": 0.0225,
+    "unused_tail_frames": 0,
+    "used_video_frames": [
+      2,
+      23
+    ],
+    "mean_motion": 0.0567
+  },
+  "frame_count": 11,
+  "fps": 12,
+  "target_fps": 12,
+  "frame_size": {
+    "w": 110,
+    "h": 156
+  },
+  "cols": 8,
+  "rows": 2,
+  "order": "row-major",
+  "canvas": {
+    "w": 2671,
+    "h": 947,
+    "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+  },
+  "art_pixel_size": 3.0356,
+  "art_pixel_source": "detected with hints (first try: 3.0356 px, quality 1, weak)",
+  "grid": {
+    "offset": {
+      "x": 0.0148,
+      "y": 0.9717
+    },
+    "quality": 3,
+    "coherence": {
+      "x": 0.0717,
+      "y": 0.0857
+    },
+    "notes": [],
+    "sample_frames": [
+      0,
+      3,
+      7,
+      10,
+      14,
+      17,
+      21,
+      24
+    ],
+    "attempts": [
+      {
+        "hint": 3,
+        "pixel_size": 3.0356,
+        "quality": 1,
+        "coherence": 0.3587,
+        "plausible": true
+      },
+      {
+        "hint": 3,
+        "pixel_size": 3.0356,
+        "quality": 1,
+        "coherence": 0.3587,
+        "plausible": true
+      },
+      {
+        "hint": 3.5,
+        "pixel_size": 3.3039,
+        "quality": 1,
+        "coherence": 0.0747,
+        "plausible": true
+      },
+      {
+        "hint": 4,
+        "pixel_size": 4,
+        "quality": 1,
+        "coherence": 0.0779,
+        "plausible": true
+      },
+      {
+        "hint": 4.5,
+        "pixel_size": 4.5,
+        "quality": 1,
+        "coherence": 0.0586,
+        "plausible": true
+      },
+      {
+        "hint": 5,
+        "pixel_size": 5,
+        "quality": 1,
+        "coherence": 0.0443,
+        "plausible": true
+      },
+      {
+        "hint": 6,
+        "pixel_size": 6,
+        "quality": 1,
+        "coherence": 0.0486,
+        "plausible": true
+      },
+      {
+        "hint": 7,
+        "pixel_size": 7,
+        "quality": 1,
+        "coherence": 0.046,
+        "plausible": true
+      },
+      {
+        "hint": 8,
+        "pixel_size": 8,
+        "quality": 1,
+        "coherence": 0.06,
+        "plausible": true
+      },
+      {
+        "hint": 9,
+        "pixel_size": 9,
+        "quality": 1,
+        "coherence": 0.0449,
+        "plausible": true
+      },
+      {
+        "hint": 10,
+        "pixel_size": 10,
+        "quality": 1,
+        "coherence": 0.0564,
+        "plausible": true
+      },
+      {
+        "hint": 11,
+        "pixel_size": 11,
+        "quality": 1,
+        "coherence": 0.0518,
+        "plausible": true
+      },
+      {
+        "hint": 12,
+        "pixel_size": 12,
+        "quality": 1,
+        "coherence": 0.0656,
+        "plausible": true
+      }
+    ]
+  },
+  "crop_box_video_px": {
+    "x": 24,
+    "y": 142,
+    "w": 334,
+    "h": 474
+  },
+  "chroma": {
+    "key": "auto (first #fc01fc)",
+    "fuzz": 0.22,
+    "max_key_drift": 3.2
+  },
+  "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-inputs/sprite-hard-alpha.png",
+  "colors": 2762,
+  "files": {
+    "frames": [
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-00.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-01.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-02.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-03.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-04.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-05.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-06.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-07.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-08.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-09.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/frames/black-knight-walk-lite-10.png"
+    ],
+    "sheet": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/black-knight-walk-lite-sheet-unslop.png",
+    "raw_sheet": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/black-knight-walk-lite-sheet-raw.png",
+    "gif": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/black-knight-walk-lite-frames/black-knight-walk-lite.gif"
+  }
+}

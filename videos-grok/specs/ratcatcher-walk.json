@@ -1,0 +1,16 @@
+{
+  "action": "The ratcatcher does a game walk cycle, like a walk on a treadmill. He takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms swing only a little, opposite to the legs. The torso keeps its front three-quarter view, and the head and the feet point to screen-right.",
+  "beats": [
+    {"at": "0-0.5 s", "pose": "the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body"},
+    {"at": "0.5-1 s", "pose": "the near leg swings forward past the far leg and lands in front, while the far foot slides back"}
+  ],
+  "keep": [
+    "The rust-orange scarf keeps its frayed end with 3 to 4 thin loose threads that hang down behind the shoulder in every frame.",
+    "The small brass lantern hangs on its short chain from the front of the belt, with a yellow light in its glass, in every frame.",
+    "The rear hand holds the short hooked blade low, with the curved blade pointing down, in every frame."
+  ],
+  "facing": "screen-right",
+  "loop": true,
+  "duration_s": 1,
+  "room": {"left": 0.2, "right": 0.2}
+}

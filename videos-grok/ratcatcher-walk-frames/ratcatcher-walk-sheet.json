@@ -1,0 +1,100 @@
+{
+  "format": "grok-video-frames/1",
+  "name": "ratcatcher-walk",
+  "source_video": {
+    "path": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk.mp4",
+    "width": 480,
+    "height": 848,
+    "fps": 24,
+    "frames": 25
+  },
+  "cycle": {
+    "mode": "loop",
+    "start_frame": 3,
+    "end_frame": 17,
+    "period_s": 0.583,
+    "closing_distance": 0.0044,
+    "close_threshold": 0.0109,
+    "unused_tail_frames": 7,
+    "used_video_frames": [
+      3,
+      16
+    ],
+    "mean_motion": 0.0382
+  },
+  "frame_count": 7,
+  "fps": 12,
+  "target_fps": 12,
+  "frame_size": {
+    "w": 89,
+    "h": 201
+  },
+  "cols": 7,
+  "rows": 1,
+  "order": "row-major",
+  "canvas": {
+    "w": 1871,
+    "h": 604,
+    "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+  },
+  "art_pixel_size": 3.0031,
+  "art_pixel_source": "hint 3, refined",
+  "grid": {
+    "offset": {
+      "x": 0.827,
+      "y": 0.6737
+    },
+    "quality": 3,
+    "coherence": {
+      "x": 0.1716,
+      "y": 0.1964
+    },
+    "notes": [],
+    "sample_frames": [
+      0,
+      3,
+      7,
+      10,
+      14,
+      17,
+      21,
+      24
+    ],
+    "attempts": [
+      {
+        "hint": 3,
+        "pixel_size": 3.0031,
+        "quality": 3,
+        "coherence": 0.8438,
+        "plausible": true
+      }
+    ]
+  },
+  "crop_box_video_px": {
+    "x": 90,
+    "y": 126,
+    "w": 267,
+    "h": 604
+  },
+  "chroma": {
+    "key": "auto (first #0000fc)",
+    "fuzz": 0.22,
+    "max_key_drift": 0
+  },
+  "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-inputs/sprite-hard-alpha.png",
+  "colors": 2715,
+  "files": {
+    "frames": [
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-00.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-01.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-02.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-03.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-04.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-05.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/frames/ratcatcher-walk-06.png"
+    ],
+    "sheet": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/ratcatcher-walk-sheet-unslop.png",
+    "raw_sheet": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/ratcatcher-walk-sheet-raw.png",
+    "gif": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames/ratcatcher-walk.gif"
+  }
+}

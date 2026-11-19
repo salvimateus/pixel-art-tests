@@ -1,0 +1,234 @@
+{
+  "backend": "api",
+  "model": "gpt-image-2.6-sunburst",
+  "endpoint": "POST https://api.openai.com/v1/images/edits",
+  "parameters": {
+    "model": "gpt-image-2.6-sunburst",
+    "n": 1,
+    "size": "1024x1536",
+    "quality": "max",
+    "complexity": "high",
+    "output_format": "png",
+    "background": "transparent"
+  },
+  "prompt_file": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near.json",
+  "prompt_spec": {
+    "type": "edit",
+    "edit": "Change only the pose of the legs and the arms to the contact pose of a side-view walk cycle. The near leg (the leg nearer to the viewer) is in front of the body, almost straight, and its heel touches the ground line with the toe up. The far leg is behind the body, almost straight, and only its toe touches the ground line with the heel up. The stride is wide: the two feet are about one foot length and a half apart. The arms swing a little, opposite to the legs: the near arm is a little behind, the far arm a little in front. The rear hand still holds the hooked blade low. Both feet stay on the same ground line as in image 1.",
+    "preserve": "The same undercity ratcatcher as image 1, identical in every detail: dark grey cloth hood with the round brass goggles pushed up on the front of the hood; lean weathered face in profile with short stubble; the frayed rust-orange scarf around the neck, with its loose end hanging behind the shoulder and its 3 to 4 thin loose single-pixel threads; the short patched brown leather jacket with every stitched patch at the same place; the leather belt with its brass buckle; the small brass lantern with the yellow light in its glass, hanging on its short chain from the front of the belt; the patched dark grey trousers with every patch; the dark brown leather boots; the fingerless leather gloves; the short hooked blade held low in the rear hand, with the curved blade pointing down. The same colors and palette, the same 1 art pixel near-black outline, the same art pixel size, the same character height of about 196 art pixels, the same view (torso in front three-quarter view, the head and the feet facing screen-right), the same position in the image, and the same ground line under the boots.",
+    "style_match": "Keep the exact pixel-art style of image 1: hard pixel edges, crisp clusters, 4 to 5 shading tones per material, light from the top left.",
+    "references": "Image 1 is the character to edit. It gives the identity, the colors, the scale and the view.",
+    "logical_grid": "128x192 pixels, each logical pixel is one solid square block of about 8x8 image pixels",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no dithering, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "aspect_ratio": "2:3",
+    "avoid": [
+      "new parts",
+      "missing parts",
+      "a change of the character size",
+      "a change of the view or the facing",
+      "the character turned toward the viewer",
+      "a jump or both feet in the air",
+      "a march with a high knee",
+      "anti-aliasing",
+      "gradients",
+      "blur",
+      "soft shadows",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "text",
+      "checkerboard pattern"
+    ]
+  },
+  "input_images": [
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png"
+  ],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near-api.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near-api-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.0106411,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "pixel_size_option": null,
+    "reference": {
+      "art_pixel": 7.4573,
+      "source": "sidecar of /home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png",
+      "sprite_height": 196
+    },
+    "sprite_height": 210,
+    "height_check": {
+      "reference": 196,
+      "first": 210,
+      "retry": 210,
+      "retried": true,
+      "ok": false
+    },
+    "grid_retry": {
+      "chosen_hint": 7.5,
+      "attempts": [
+        {
+          "hint": 3,
+          "native_size": "365x548",
+          "art_pixel": {
+            "x": 2.8048,
+            "y": 2.8048
+          },
+          "quality": 2,
+          "notes": [],
+          "accepted": false
+        },
+        {
+          "hint": 3.5,
+          "native_size": "301x451",
+          "art_pixel": {
+            "x": 3.4019,
+            "y": 3.4019
+          },
+          "quality": 2,
+          "notes": [],
+          "accepted": false
+        },
+        {
+          "hint": 4,
+          "native_size": "242x367",
+          "art_pixel": {
+            "x": 4.2828,
+            "y": 4.2828
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 4.5,
+          "native_size": "222x332",
+          "art_pixel": {
+            "x": 4.6944,
+            "y": 4.6955
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 5,
+          "native_size": "222x332",
+          "art_pixel": {
+            "x": 4.6944,
+            "y": 4.6956
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 6,
+          "native_size": "173x258",
+          "art_pixel": {
+            "x": 5.9747,
+            "y": 5.9767
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 7,
+          "native_size": "150x226",
+          "art_pixel": {
+            "x": 6.9368,
+            "y": 6.9345
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 8,
+          "native_size": "135x203",
+          "art_pixel": {
+            "x": 7.5669,
+            "y": 7.5665
+          },
+          "quality": 1,
+          "notes": [],
+          "accepted": false
+        },
+        {
+          "hint": 7.5,
+          "native_size": "150x226",
+          "art_pixel": {
+            "x": 6.9369,
+            "y": 6.9345
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        }
+      ]
+    },
+    "native_size": "150x226",
+    "art_pixel_size": {
+      "x": 6.9369,
+      "y": 6.9345
+    },
+    "grid": {
+      "cols": 150,
+      "rows": 226,
+      "pixelSize": {
+        "x": 6.9369,
+        "y": 6.9345
+      },
+      "quality": 2,
+      "notes": [
+        "elastic"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 2210,
+    "input_tokens_details": {
+      "image_tokens": 1536,
+      "text_tokens": 674
+    },
+    "output_tokens": 5488,
+    "output_tokens_details": {
+      "image_tokens": 5488,
+      "text_tokens": 0
+    },
+    "total_tokens": 7698
+  },
+  "estimated_cost_usd": 0.180298,
+  "cost_note": "OpenAI Image API: billed in money",
+  "codex": null,
+  "request_id": "req_9f6e29fb7dfc455b89825cc6c2a32ba7"
+}

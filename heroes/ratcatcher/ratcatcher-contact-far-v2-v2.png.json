@@ -1,0 +1,103 @@
+{
+  "backend": "reprocess",
+  "model": null,
+  "endpoint": "reprocess (no image request)",
+  "parameters": {
+    "model": null,
+    "n": 1,
+    "size": "raw-native",
+    "source_raw": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-far-v2.png",
+    "output_format": "png",
+    "background": "transparent"
+  },
+  "prompt_file": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-far-v2.json",
+  "prompt_spec": {
+    "type": "edit",
+    "edit": "Change only the pose of the legs and the arms of image 1 to the opposite contact pose of a side-view walk cycle: the mirror stride of image 2. In image 2 the leg with the grey trouser patch is in front and the leg with the brown trouser patch is behind; the empty hand is in front and the blade hand is behind. Swap all four: the leg with the brown trouser patch is now in front of the body, almost straight, with its heel on the ground line and the toe up. The leg with the grey trouser patch is now behind the body, almost straight, with only its toe on the ground line and the heel up. The hand that holds the hooked blade now swings a little in front of the body, blade still low and pointing down. The empty hand now swings a little behind the body. Use the same stride width as image 2: the two feet are about one foot length and a half apart. Both feet stay on the same ground line as in image 1.",
+    "preserve": "The same undercity ratcatcher as image 1, identical in every detail: dark grey cloth hood with the round brass goggles pushed up on the front of the hood; lean weathered face in profile with short stubble; the frayed rust-orange scarf around the neck, with its loose end hanging behind the shoulder and its 3 to 4 thin loose single-pixel threads; the short patched brown leather jacket with every stitched patch at the same place; the leather belt with its brass buckle; the small brass lantern with the yellow light in its glass, hanging on its short chain from the front of the belt; the patched dark grey trousers with every patch; the dark brown leather boots; the fingerless leather gloves; the short hooked blade held low in the rear hand, with the curved blade pointing down. The same colors and palette, the same 1 art pixel near-black outline, the same art pixel size, the same character height of about 196 art pixels, the same view (torso in front three-quarter view, the head and the feet facing screen-right), the same position in the image, and the same ground line under the boots.",
+    "style_match": "Keep the exact pixel-art style of image 1: hard pixel edges, crisp clusters, 4 to 5 shading tones per material, light from the top left.",
+    "references": "Image 1 is the character to edit. It gives the identity, every detail, the colors, the pixel size, the scale, the view, the facing and the position. Image 2 is the same character in the first contact pose. Use it only for the stride width, the leg angles and the arm swing, mirrored as described in edit. Do not copy its pose as it is.",
+    "logical_grid": "128x192 pixels, each logical pixel is one solid square block of about 8x8 image pixels",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no dithering, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "aspect_ratio": "2:3",
+    "avoid": [
+      "new parts",
+      "missing parts",
+      "a change of the character size",
+      "a change of the view or the facing",
+      "the character turned toward the viewer",
+      "a jump or both feet in the air",
+      "a march with a high knee",
+      "anti-aliasing",
+      "gradients",
+      "blur",
+      "soft shadows",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "text",
+      "checkerboard pattern",
+      "ground line",
+      "shadow under the feet",
+      "the same pose as image 2",
+      "the grey patch leg in front",
+      "the blade hand behind the body"
+    ]
+  },
+  "input_images": [],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-far-v2-v2.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-far-v2-v2-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.0102456,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "pixel_size_option": 7.4573,
+    "reference": {
+      "art_pixel": 7.4573,
+      "source": "sidecar of /home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png",
+      "sprite_height": 196
+    },
+    "sprite_height": 200,
+    "height_check": null,
+    "grid_retry": null,
+    "native_size": "147x217",
+    "art_pixel_size": {
+      "x": 7.0411,
+      "y": 7.0411
+    },
+    "grid": {
+      "cols": 147,
+      "rows": 217,
+      "pixelSize": {
+        "x": 7.0411,
+        "y": 7.0411
+      },
+      "quality": 2,
+      "notes": [
+        "elastic"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {},
+  "estimated_cost_usd": 0,
+  "cost_note": "Reprocess: no money, no quota. No image request was sent.",
+  "codex": null,
+  "request_id": ""
+}

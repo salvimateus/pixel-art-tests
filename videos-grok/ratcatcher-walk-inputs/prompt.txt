@@ -1,0 +1,20 @@
+Animate the pixel-art game character of the first frame. The ratcatcher does a game walk cycle, like a walk on a treadmill. He takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms swing only a little, opposite to the legs. The torso keeps its front three-quarter view, and the head and the feet point to screen-right.
+The character faces screen-right for the whole clip and never turns.
+The body stays at the same spot in the picture.
+
+One cycle in 1 s, in this order:
+1. 0-0.5 s: the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body
+2. 0.5-1 s: the near leg swings forward past the far leg and lands in front, while the far foot slides back
+
+The clip is exactly one cycle, with no pause and no second cycle. The last frame is the first frame again: the motion leaves that pose and comes back to it.
+
+The character stays exactly as in the first frame: the same design, proportions, colors, equipment and small details, at the same size.
+Only the pose changes. No part appears, disappears or changes shape.
+The rust-orange scarf keeps its frayed end with 3 to 4 thin loose threads that hang down behind the shoulder in every frame.
+The small brass lantern hangs on its short chain from the front of the belt, with a yellow light in its glass, in every frame.
+The rear hand holds the short hooked blade low, with the curved blade pointing down, in every frame.
+
+Locked static camera, no zoom, no pan. The full character stays inside the picture. The feet stay on the same ground line.
+
+Same pixel-art style as the first frame: hard pixel edges and the same palette. Every moment is sharp, with no motion blur.
+The background stays flat solid blue (#0000FF) for the whole clip: no floor, no shadow, no gradient, no effects.

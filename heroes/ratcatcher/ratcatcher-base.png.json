@@ -1,0 +1,166 @@
+{
+  "backend": "codex",
+  "model": "gpt-image-2 (fixed by the Codex built-in image_gen tool)",
+  "endpoint": "codex exec (built-in image_gen tool)",
+  "parameters": {
+    "model": "gpt-image-2 (fixed by the Codex built-in image_gen tool)",
+    "n": 1,
+    "size": "codex-native",
+    "aspect_ratio_hint": "2:3",
+    "transparent_background": true,
+    "output_format": "png",
+    "codex_raw_format": "png"
+  },
+  "prompt_file": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.json",
+  "prompt_spec": {
+    "type": "pixel art",
+    "task": "Base pose of a new player character for a 2D side-scrolling action game set in a dark sewer and dungeon. This image will be the first and the last frame of a walk loop animation.",
+    "subject": "The undercity ratcatcher: an original character design. A lean adult human who hunts giant rats in the sewers. Short patched brown leather jacket that ends at the hips, with stitched patches and a leather belt. Patched dark grey trousers tucked into sturdy dark brown leather boots. A dark grey cloth hood over the head, with a pair of round brass goggles pushed up on the front of the hood. Lean, weathered face in profile, short stubble. A frayed rust-orange scarf wrapped around the neck, with two short ends that hang down over the chest and the back, each end with a few loose single-pixel threads. A small brass lantern hangs on a short chain from the belt at the hip, close to the thigh. The near hand holds a short hooked blade, held low and close to the body, the blade points down and forward. Fingerless leather gloves.",
+    "logical_grid": "128x192 pixels, each logical pixel is one solid square block of about 8x8 image pixels",
+    "scale": "The character is about 150 art pixels tall from the boot soles to the top of the hood, about 1200 image pixels. The full character is inside the image, with a small empty margin on all sides.",
+    "view": "Near side view, facing screen-right. The torso, the hips and the head are turned only about 20 degrees toward the viewer, so only a thin part of the chest front is visible. The head is in profile and looks to the right.",
+    "pose": "Neutral standing pose for the first frame of a walk loop. Both legs are almost straight, the near leg a little forward, the far leg a little back, with a small clear gap between the two legs, so both legs are clearly visible and separate. Both feet point to the right and both soles are flat on one horizontal ground line. Weight centered. Both arms relaxed and hang near the body, with the elbows slightly bent. No part sticks far out from the body.",
+    "rig_readiness": "Each body part reads as a separate solid shape: head, hood, torso, hips, upper arm, forearm, hand, thigh, shin, boot, blade, lantern, scarf. Clear breaks at the shoulder, elbow, wrist, hip, knee and ankle. No long coat, no cape, no cloth below the hips that hides the legs.",
+    "palette_size": "about 24 colors",
+    "palette": [
+      "#14110F",
+      "#2A2522",
+      "#3B3633",
+      "#55504B",
+      "#3A2618",
+      "#5A3A22",
+      "#7A5233",
+      "#9C6F45",
+      "#6E2E14",
+      "#9E4420",
+      "#C2632C",
+      "#E08A45",
+      "#6B4E1C",
+      "#A07A2E",
+      "#D4AA52",
+      "#F0D68A",
+      "#8C6650",
+      "#B98A6A"
+    ],
+    "colors": "Muted browns for the leather, rust orange for the scarf, brass for the goggles and the lantern, dark grey for the hood and the trousers, a warm small yellow light inside the lantern glass. Strong readable silhouette against a dark sewer background.",
+    "outline": "1 art pixel dark outline around the whole character, near black brown #14110F",
+    "style": "Detailed pixel art, the same style as a dark fantasy platformer knight sprite: 4 to 5 shading tones per material, light from the top left, crisp clusters of pixels. Realistic adult proportions, about 6.5 heads tall. Not chibi, not cartoon.",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no dithering, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "aspect_ratio": "2:3",
+    "avoid": [
+      "long coat",
+      "cape",
+      "cloak below the hips",
+      "legs that merge into one shape",
+      "three-quarter front view",
+      "chest facing the viewer",
+      "feet pointing toward the viewer",
+      "a weapon that sticks far out from the body",
+      "a character from an existing game, film or comic",
+      "text",
+      "labels",
+      "anti-aliasing",
+      "gradients",
+      "soft shadows",
+      "glow halo",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "smoke",
+      "checkerboard pattern"
+    ]
+  },
+  "input_images": [],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.00836309,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "grid_retry": null,
+    "native_size": "141x210",
+    "art_pixel_size": {
+      "x": 7.3669,
+      "y": 7.5477
+    },
+    "grid": {
+      "cols": 141,
+      "rows": 210,
+      "pixelSize": {
+        "x": 7.3669,
+        "y": 7.5477
+      },
+      "quality": 3,
+      "notes": [
+        "elastic"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 45875,
+    "cached_input_tokens": 35072,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1032,
+    "reasoning_output_tokens": 0
+  },
+  "estimated_cost_usd": 0,
+  "cost_note": "Codex: no money. The image used the ChatGPT plan quota.",
+  "codex": {
+    "cli": "codex-cli 0.170.0",
+    "thread_id": "01a1f51b-8b00-7981-8b3f-abe72b51d8a0",
+    "raw_codex_file": "/home/salvi/.codex/generated_images/01a1f51b-8b00-7981-8b3f-abe72b51d8a0/exec-8e83d83c-770b-45f6-9bce-8037d88422bb.png",
+    "rollout": "/home/salvi/.codex/sessions/2026/11/19/rollout-2026-11-19T15-39-45-01a1f51b-8b00-7981-8b3f-abe72b51d8a0.jsonl",
+    "image_model": "gpt-image-2 (fixed by Codex, size auto, quality auto)",
+    "quota_before": {
+      "ordinary_usage_allowed": true,
+      "plan": "plus",
+      "reached": null,
+      "spend_control_reached": false,
+      "primary": {
+        "usedPercent": 0,
+        "windowDurationMins": 300,
+        "resetsAt": 1795126327
+      },
+      "secondary": {
+        "usedPercent": 0,
+        "windowDurationMins": 10080,
+        "resetsAt": 1795713127
+      }
+    },
+    "quota_after": {
+      "ordinary_usage_allowed": true,
+      "plan": "plus",
+      "reached": null,
+      "spend_control_reached": false,
+      "primary": {
+        "usedPercent": 2,
+        "windowDurationMins": 300,
+        "resetsAt": 1795126327
+      },
+      "secondary": {
+        "usedPercent": 0,
+        "windowDurationMins": 10080,
+        "resetsAt": 1795713127
+      }
+    },
+    "corner_key_applied": false
+  },
+  "request_id": "01a1f51b-8b00-7981-8b3f-abe72b51d8a0"
+}

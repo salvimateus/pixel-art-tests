@@ -1,0 +1,188 @@
+{
+  "format": "grok-video-frames/1",
+  "name": "grok-ab-A2",
+  "source_video": {
+    "path": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2.mp4",
+    "width": 400,
+    "height": 752,
+    "fps": 24,
+    "frames": 25
+  },
+  "cycle": {
+    "mode": "loop",
+    "start_frame": 2,
+    "end_frame": 23,
+    "period_s": 0.875,
+    "closing_distance": 0.0048,
+    "close_threshold": 0.0243,
+    "unused_tail_frames": 1,
+    "used_video_frames": [
+      2,
+      22
+    ],
+    "mean_motion": 0.0728
+  },
+  "frame_count": 11,
+  "fps": 12.571,
+  "target_fps": 12,
+  "frame_size": {
+    "w": 117,
+    "h": 156
+  },
+  "cols": 8,
+  "rows": 2,
+  "order": "row-major",
+  "canvas": {
+    "w": 2841,
+    "h": 947,
+    "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+  },
+  "art_pixel_size": 3.0357,
+  "art_pixel_source": "detected with hints (first try: 3.0357 px, quality 1, weak)",
+  "grid": {
+    "offset": {
+      "x": 0.9154,
+      "y": 0.026
+    },
+    "quality": 2,
+    "coherence": {
+      "x": 0.0329,
+      "y": 0.0625
+    },
+    "notes": [],
+    "sample_frames": [
+      0,
+      3,
+      7,
+      10,
+      14,
+      17,
+      21,
+      24
+    ],
+    "attempts": [
+      {
+        "hint": 3,
+        "pixel_size": 3.0357,
+        "quality": 1,
+        "coherence": 0.3543,
+        "plausible": true
+      },
+      {
+        "hint": 3,
+        "pixel_size": 3.0357,
+        "quality": 1,
+        "coherence": 0.3543,
+        "plausible": true
+      },
+      {
+        "hint": 3.5,
+        "pixel_size": 3.3037,
+        "quality": 1,
+        "coherence": 0.0542,
+        "plausible": true
+      },
+      {
+        "hint": 4,
+        "pixel_size": 4,
+        "quality": 1,
+        "coherence": 0.0803,
+        "plausible": true
+      },
+      {
+        "hint": 4.5,
+        "pixel_size": 4.5,
+        "quality": 1,
+        "coherence": 0.038,
+        "plausible": true
+      },
+      {
+        "hint": 5,
+        "pixel_size": 5,
+        "quality": 1,
+        "coherence": 0.0537,
+        "plausible": true
+      },
+      {
+        "hint": 6,
+        "pixel_size": 6,
+        "quality": 1,
+        "coherence": 0.0622,
+        "plausible": true
+      },
+      {
+        "hint": 7,
+        "pixel_size": 7,
+        "quality": 1,
+        "coherence": 0.0618,
+        "plausible": true
+      },
+      {
+        "hint": 8,
+        "pixel_size": 8,
+        "quality": 1,
+        "coherence": 0.054,
+        "plausible": true
+      },
+      {
+        "hint": 9,
+        "pixel_size": 9,
+        "quality": 1,
+        "coherence": 0.0521,
+        "plausible": true
+      },
+      {
+        "hint": 10,
+        "pixel_size": 10,
+        "quality": 1,
+        "coherence": 0.0587,
+        "plausible": true
+      },
+      {
+        "hint": 11,
+        "pixel_size": 11,
+        "quality": 1,
+        "coherence": 0.0381,
+        "plausible": true
+      },
+      {
+        "hint": 12,
+        "pixel_size": 12,
+        "quality": 1,
+        "coherence": 0.0486,
+        "plausible": true
+      }
+    ]
+  },
+  "crop_box_video_px": {
+    "x": -4,
+    "y": 143,
+    "w": 355,
+    "h": 474
+  },
+  "chroma": {
+    "key": "auto (first #fc03fb)",
+    "fuzz": 0.22,
+    "max_key_drift": 2.8
+  },
+  "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-inputs/sprite-hard-alpha.png",
+  "colors": 2740,
+  "files": {
+    "frames": [
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-00.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-01.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-02.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-03.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-04.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-05.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-06.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-07.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-08.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-09.png",
+      "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/frames/grok-ab-A2-10.png"
+    ],
+    "sheet": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/grok-ab-A2-sheet-unslop.png",
+    "raw_sheet": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/grok-ab-A2-sheet-raw.png",
+    "gif": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/grok-ab-A2-frames/grok-ab-A2.gif"
+  }
+}

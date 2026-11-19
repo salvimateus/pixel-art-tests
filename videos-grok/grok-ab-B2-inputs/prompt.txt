@@ -1,0 +1,19 @@
+Animate the pixel-art game character of the first frame. The knight does a game walk cycle in side view, like a walk on a treadmill. The knight takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms move only a little. The sword stays level and points forward, and the shield stays in front of the body.
+The character faces screen-right for the whole clip and never turns.
+The body stays at the same spot in the picture.
+
+One cycle in 1 s, in this order:
+1. 0-0.5 s: the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body
+2. 0.5-1 s: the near leg swings forward past the far leg and lands in front, while the far foot slides back
+
+The clip is exactly one cycle, with no pause and no second cycle. It ends in the exact pose of the first frame.
+
+The character stays exactly as in the first frame: the same design, proportions, colors, equipment and small details, at the same size.
+Only the pose changes. No part appears, disappears or changes shape.
+The red tabard keeps its torn hem with pointed tatters in every frame.
+The shield keeps its gold eagle on a black field.
+
+Locked static camera, no zoom, no pan. The full character stays inside the picture. The feet stay on the same ground line.
+
+Same pixel-art style as the first frame: hard pixel edges and the same palette. Every moment is sharp, with no motion blur.
+The background stays flat solid magenta (#FF00FF) for the whole clip: no floor, no shadow, no gradient, no effects.

@@ -1,0 +1,116 @@
+{
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk.mp4",
+  "hash": "c772837c6dfd29624bbd6edcd6fbf08d369f359519ad79b7a0d7fc33f317af97",
+  "model": "grok-imagine-video-1.5",
+  "endpoint": "POST /v1/videos/generations",
+  "parameters": {
+    "model": "grok-imagine-video-1.5",
+    "duration": 1,
+    "resolution": "480p",
+    "generate_audio": false
+  },
+  "spec_file": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/specs/ratcatcher-walk.json",
+  "spec": {
+    "action": "The ratcatcher does a game walk cycle, like a walk on a treadmill. He takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms swing only a little, opposite to the legs. The torso keeps its front three-quarter view, and the head and the feet point to screen-right.",
+    "beats": [
+      {
+        "at": "0-0.5 s",
+        "pose": "the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body"
+      },
+      {
+        "at": "0.5-1 s",
+        "pose": "the near leg swings forward past the far leg and lands in front, while the far foot slides back"
+      }
+    ],
+    "keep": [
+      "The rust-orange scarf keeps its frayed end with 3 to 4 thin loose threads that hang down behind the shoulder in every frame.",
+      "The small brass lantern hangs on its short chain from the front of the belt, with a yellow light in its glass, in every frame.",
+      "The rear hand holds the short hooked blade low, with the curved blade pointing down, in every frame."
+    ],
+    "facing": "screen-right",
+    "loop": true,
+    "duration_s": 1,
+    "room": {
+      "left": 0.2,
+      "right": 0.2
+    }
+  },
+  "prompt": "Animate the pixel-art game character of the first frame. The ratcatcher does a game walk cycle, like a walk on a treadmill. He takes two equal steps, one with each leg. Each foot swings forward low above the ground, lands on the heel in front of the body, then slides back below the body. The body moves up and down a little with each step. The knees stay low. The arms swing only a little, opposite to the legs. The torso keeps its front three-quarter view, and the head and the feet point to screen-right.\nThe character faces screen-right for the whole clip and never turns.\nThe body stays at the same spot in the picture.\n\nOne cycle in 1 s, in this order:\n1. 0-0.5 s: the far leg swings forward past the near leg and lands in front, while the near foot slides back behind the body\n2. 0.5-1 s: the near leg swings forward past the far leg and lands in front, while the far foot slides back\n\nThe clip is exactly one cycle, with no pause and no second cycle. The last frame is the first frame again: the motion leaves that pose and comes back to it.\n\nThe character stays exactly as in the first frame: the same design, proportions, colors, equipment and small details, at the same size.\nOnly the pose changes. No part appears, disappears or changes shape.\nThe rust-orange scarf keeps its frayed end with 3 to 4 thin loose threads that hang down behind the shoulder in every frame.\nThe small brass lantern hangs on its short chain from the front of the belt, with a yellow light in its glass, in every frame.\nThe rear hand holds the short hooked blade low, with the curved blade pointing down, in every frame.\n\nLocked static camera, no zoom, no pan. The full character stays inside the picture. The feet stay on the same ground line.\n\nSame pixel-art style as the first frame: hard pixel edges and the same palette. Every moment is sharp, with no motion blur.\nThe background stays flat solid blue (#0000FF) for the whole clip: no floor, no shadow, no gradient, no effects.\n",
+  "prep": {
+    "source": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base-unslop.png",
+    "prepared": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-inputs/first.png",
+    "chroma": "#0000FF",
+    "chroma_min_distance": 0.317,
+    "sprite_size": {
+      "w": 69,
+      "h": 196
+    },
+    "scale": 3,
+    "canvas": {
+      "w": 480,
+      "h": 848
+    },
+    "canvas_mode": "standard ratio (inferred 1.5 output size)",
+    "sprite_offset": {
+      "x": 136,
+      "y": 130
+    },
+    "resolution": "480p"
+  },
+  "last_frame": "same",
+  "keyframes": [],
+  "inputs_dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-inputs",
+  "estimated_cost_usd": 0.1000,
+  "frames_step": {
+    "enabled": true,
+    "fps": 12,
+    "cycle": "loop",
+    "palette": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-inputs/sprite-hard-alpha.png",
+    "dir": "/home/salvi/www/salvi/games/pixel-art-tests/videos-grok/ratcatcher-walk-frames",
+    "frame_count": 7,
+    "frame_size": {
+      "w": 89,
+      "h": 201
+    },
+    "canvas": {
+      "w": 1871,
+      "h": 604,
+      "note": "raw sheet size before pixel-unslop, for the project key-sheet config"
+    },
+    "art_pixel_size": 3.0031,
+    "grid_quality": 3
+  },
+  "prompt_override": null,
+  "request_id": "53353c9b-de9f-9967-ad42-73a7ed39bc53",
+  "status": "done",
+  "sent_at": "2026-11-19T18:52:42Z",
+  "response": {
+    "status": "done",
+    "video": {
+      "duration": 1,
+      "respect_moderation": true
+    },
+    "model": "grok-imagine-video-1.5",
+    "usage": {
+      "cost_in_usd_ticks": 1000000000
+    },
+    "progress": 100
+  },
+  "usage": {
+    "cost_in_usd_ticks": 1000000000
+  },
+  "cost_usd": 0.100000,
+  "video": {
+    "width": 480,
+    "height": 848,
+    "fps": "24/1",
+    "duration_s": 1.041667
+  },
+  "video_vs_first_frame": {
+    "first_frame": "480x848",
+    "video": "480x848",
+    "scale_x": 1,
+    "scale_y": 1,
+    "same_size": true
+  }
+}

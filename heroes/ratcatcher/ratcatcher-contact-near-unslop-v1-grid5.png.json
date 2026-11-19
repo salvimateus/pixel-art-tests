@@ -1,0 +1,238 @@
+{
+  "backend": "codex",
+  "model": "gpt-image-2 (fixed by the Codex built-in image_gen tool)",
+  "endpoint": "codex exec (built-in image_gen tool)",
+  "parameters": {
+    "model": "gpt-image-2 (fixed by the Codex built-in image_gen tool)",
+    "n": 1,
+    "size": "codex-native",
+    "aspect_ratio_hint": "2:3",
+    "transparent_background": true,
+    "output_format": "png",
+    "codex_raw_format": "png"
+  },
+  "prompt_file": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near.json",
+  "prompt_spec": {
+    "type": "edit",
+    "edit": "Change only the pose of the legs and the arms to the contact pose of a side-view walk cycle. The near leg (the leg nearer to the viewer) is in front of the body, almost straight, and its heel touches the ground line with the toe up. The far leg is behind the body, almost straight, and only its toe touches the ground line with the heel up. The stride is wide: the two feet are about one foot length and a half apart. The arms swing a little, opposite to the legs: the near arm is a little behind, the far arm a little in front. The rear hand still holds the hooked blade low. Both feet stay on the same ground line as in image 1.",
+    "preserve": "The same undercity ratcatcher as image 1, identical in every detail: dark grey cloth hood with the round brass goggles pushed up on the front of the hood; lean weathered face in profile with short stubble; the frayed rust-orange scarf around the neck, with its loose end hanging behind the shoulder and its 3 to 4 thin loose single-pixel threads; the short patched brown leather jacket with every stitched patch at the same place; the leather belt with its brass buckle; the small brass lantern with the yellow light in its glass, hanging on its short chain from the front of the belt; the patched dark grey trousers with every patch; the dark brown leather boots; the fingerless leather gloves; the short hooked blade held low in the rear hand, with the curved blade pointing down. The same colors and palette, the same 1 art pixel near-black outline, the same art pixel size, the same character height of about 196 art pixels, the same view (torso in front three-quarter view, the head and the feet facing screen-right), the same position in the image, and the same ground line under the boots.",
+    "style_match": "Keep the exact pixel-art style of image 1: hard pixel edges, crisp clusters, 4 to 5 shading tones per material, light from the top left.",
+    "references": "Image 1 is the character to edit. It gives the identity, the colors, the scale and the view.",
+    "logical_grid": "128x192 pixels, each logical pixel is one solid square block of about 8x8 image pixels",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no dithering, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "aspect_ratio": "2:3",
+    "avoid": [
+      "new parts",
+      "missing parts",
+      "a change of the character size",
+      "a change of the view or the facing",
+      "the character turned toward the viewer",
+      "a jump or both feet in the air",
+      "a march with a high knee",
+      "anti-aliasing",
+      "gradients",
+      "blur",
+      "soft shadows",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "text",
+      "checkerboard pattern"
+    ]
+  },
+  "input_images": [
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png"
+  ],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near-unslop-v1-grid5.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.00963147,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "grid_retry": {
+      "chosen_hint": 5,
+      "attempts": [
+        {
+          "hint": 3,
+          "native_size": "320x480",
+          "art_pixel": {
+            "x": 3.1994,
+            "y": 3.1994
+          },
+          "quality": 2,
+          "notes": [],
+          "accepted": false
+        },
+        {
+          "hint": 3.5,
+          "native_size": "308x461",
+          "art_pixel": {
+            "x": 3.3272,
+            "y": 3.3272
+          },
+          "quality": 2,
+          "notes": [],
+          "accepted": false
+        },
+        {
+          "hint": 4,
+          "native_size": "256x389",
+          "art_pixel": {
+            "x": 4,
+            "y": 4
+          },
+          "quality": 3,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": false
+        },
+        {
+          "hint": 4.5,
+          "native_size": "235x352",
+          "art_pixel": {
+            "x": 4.3676,
+            "y": 4.3676
+          },
+          "quality": 1,
+          "notes": [],
+          "accepted": false
+        },
+        {
+          "hint": 5,
+          "native_size": "196x291",
+          "art_pixel": {
+            "x": 5.3353,
+            "y": 5.3353
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 6,
+          "native_size": "167x250",
+          "art_pixel": {
+            "x": 6.1934,
+            "y": 6.1934
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 7,
+          "native_size": "143x213",
+          "art_pixel": {
+            "x": 7.2416,
+            "y": 7.2416
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "accepted": true
+        },
+        {
+          "hint": 8,
+          "native_size": "135x202",
+          "art_pixel": {
+            "x": 7.6005,
+            "y": 7.6005
+          },
+          "quality": 1,
+          "notes": [],
+          "accepted": false
+        }
+      ]
+    },
+    "native_size": "196x291",
+    "art_pixel_size": {
+      "x": 5.3353,
+      "y": 5.3353
+    },
+    "grid": {
+      "cols": 196,
+      "rows": 291,
+      "pixelSize": {
+        "x": 5.3353,
+        "y": 5.3353
+      },
+      "quality": 2,
+      "notes": [
+        "elastic"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 44941,
+    "cached_input_tokens": 34688,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 702,
+    "reasoning_output_tokens": 0
+  },
+  "estimated_cost_usd": 0,
+  "cost_note": "Codex: no money. The image used the ChatGPT plan quota.",
+  "codex": {
+    "cli": "codex-cli 0.170.0",
+    "thread_id": "01a1f52b-f7e5-7502-a7e5-2ad7f7adaf80",
+    "raw_codex_file": "/home/salvi/.codex/generated_images/01a1f52b-f7e5-7502-a7e5-2ad7f7adaf80/exec-efe8ac77-a335-41f1-93c2-cb231a9260b2.png",
+    "rollout": "/home/salvi/.codex/sessions/2026/11/19/rollout-2026-11-19T15-57-41-01a1f52b-f7e5-7502-a7e5-2ad7f7adaf80.jsonl",
+    "image_model": "gpt-image-2 (fixed by Codex, size auto, quality auto)",
+    "quota_before": {
+      "ordinary_usage_allowed": true,
+      "plan": "plus",
+      "reached": null,
+      "spend_control_reached": false,
+      "primary": {
+        "usedPercent": 2,
+        "windowDurationMins": 300,
+        "resetsAt": 1795126327
+      },
+      "secondary": {
+        "usedPercent": 0,
+        "windowDurationMins": 10080,
+        "resetsAt": 1795713127
+      }
+    },
+    "quota_after": {
+      "ordinary_usage_allowed": true,
+      "plan": "plus",
+      "reached": null,
+      "spend_control_reached": false,
+      "primary": {
+        "usedPercent": 4,
+        "windowDurationMins": 300,
+        "resetsAt": 1795126327
+      },
+      "secondary": {
+        "usedPercent": 1,
+        "windowDurationMins": 10080,
+        "resetsAt": 1795713127
+      }
+    },
+    "corner_key_applied": false
+  },
+  "request_id": "01a1f52b-f7e5-7502-a7e5-2ad7f7adaf80"
+}

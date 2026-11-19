@@ -1,0 +1,278 @@
+{
+  "backend": "codex",
+  "model": "gpt-image-2 (fixed by the Codex built-in image_gen tool)",
+  "endpoint": "codex exec (built-in image_gen tool)",
+  "parameters": {
+    "model": "gpt-image-2 (fixed by the Codex built-in image_gen tool)",
+    "n": 1,
+    "size": "codex-native",
+    "aspect_ratio_hint": "2:3",
+    "transparent_background": true,
+    "output_format": "png",
+    "codex_raw_format": "png"
+  },
+  "prompt_file": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-passing-1.json",
+  "prompt_spec": {
+    "type": "edit",
+    "edit": "Change only the pose of the legs and the arms of image 1 to the passing pose of a side-view walk cycle, between the two contact poses. The leg with the grey trouser patch is straight and vertical under the body and carries the weight, with its boot flat on the ground line. The leg with the brown trouser patch is bent at the knee and swings forward past the straight leg, with its boot a little above the ground line, below the knee. Both arms hang near the body. The hand that holds the hooked blade moves a little forward, blade still low and pointing down. The empty hand moves a little back. The flat boot stays on the same ground line as in image 1.",
+    "preserve": "The same undercity ratcatcher as image 1, identical in every detail: dark grey cloth hood with the round brass goggles pushed up on the front of the hood; lean weathered face in profile with short stubble; the frayed rust-orange scarf around the neck, with its loose end hanging behind the shoulder and its 3 to 4 thin loose single-pixel threads; the short patched brown leather jacket with every stitched patch at the same place; the leather belt with its brass buckle; the small brass lantern with the yellow light in its glass, hanging on its short chain from the front of the belt; the patched dark grey trousers with every patch; the dark brown leather boots; the fingerless leather gloves; the short hooked blade held low in the rear hand, with the curved blade pointing down. The same colors and palette, the same 1 art pixel near-black outline, the same art pixel size, the same character height of about 196 art pixels, the same view (torso in front three-quarter view, the head and the feet facing screen-right), the same position in the image, and the same ground line under the boots.",
+    "style_match": "Keep the exact pixel-art style of image 1: hard pixel edges, crisp clusters, 4 to 5 shading tones per material, light from the top left.",
+    "references": "Image 1 is the character to edit. It gives the identity, every detail, the colors, the pixel size, the scale, the view, the facing and the position. Image 2 and image 3 are the same character in the two contact poses of the walk. Use them only for the leg length, the body height and the arm swing range. Do not copy their poses.",
+    "logical_grid": "128x192 pixels, each logical pixel is one solid square block of about 8x8 image pixels",
+    "rendering": "hard pixel edges, no anti-aliasing, no gradients, no dithering, no blur, no semi-transparent pixels",
+    "background": "fully transparent",
+    "aspect_ratio": "2:3",
+    "avoid": [
+      "new parts",
+      "missing parts",
+      "a change of the character size",
+      "a change of the view or the facing",
+      "the character turned toward the viewer",
+      "a jump or both feet in the air",
+      "a march with a high knee",
+      "anti-aliasing",
+      "gradients",
+      "blur",
+      "soft shadows",
+      "drop shadow",
+      "ground tiles",
+      "scenery",
+      "text",
+      "checkerboard pattern",
+      "ground line",
+      "shadow under the feet",
+      "both legs straight",
+      "the brown patch leg behind",
+      "a wide stride"
+    ]
+  },
+  "input_images": [
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png",
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-near.png",
+    "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-contact-far-v2.png"
+  ],
+  "mask": null,
+  "output": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-passing-1.png",
+  "pixel_art": {
+    "processed": "/home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-passing-1-unslop.png",
+    "status": "ok",
+    "pixel_unslop": {
+      "bin": "/home/salvi/www/salvi/games/pixel-unslop/release/wsl/pixel-unslop",
+      "command": "clean",
+      "args": [
+        "--cleanup",
+        "off",
+        "--no-trim"
+      ]
+    },
+    "alpha_cut_50": true,
+    "haze": {
+      "share_before": 0.00832431,
+      "share_after": null,
+      "limit": 0.05,
+      "smoke_cleaned": false
+    },
+    "pixel_size_option": null,
+    "reference": {
+      "art_pixel": 7.4573,
+      "source": "sidecar of /home/salvi/www/salvi/games/pixel-art-tests/heroes/ratcatcher/ratcatcher-base.png",
+      "sprite_height": 196
+    },
+    "sprite_height": 193,
+    "height_check": {
+      "reference": 196,
+      "first_grid": 1536,
+      "final": 193,
+      "ok": false
+    },
+    "grid_retry": {
+      "chosen_hint": 7,
+      "attempts": [
+        {
+          "hint": 3,
+          "native_size": "320x480",
+          "art_pixel": {
+            "x": 3.1967,
+            "y": 3.1972
+          },
+          "quality": 2,
+          "notes": [],
+          "sprite_height": null,
+          "accepted": false
+        },
+        {
+          "hint": 3.5,
+          "native_size": "301x459",
+          "art_pixel": {
+            "x": 3.3988,
+            "y": 3.3414
+          },
+          "quality": 2,
+          "notes": [],
+          "sprite_height": null,
+          "accepted": false
+        },
+        {
+          "hint": 4,
+          "native_size": "256x384",
+          "art_pixel": {
+            "x": 3.9993,
+            "y": 3.9983
+          },
+          "quality": 2,
+          "notes": [],
+          "sprite_height": 358,
+          "accepted": true
+        },
+        {
+          "hint": 4.5,
+          "native_size": "217x331",
+          "art_pixel": {
+            "x": 4.7698,
+            "y": 4.7698
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "sprite_height": 309,
+          "accepted": true
+        },
+        {
+          "hint": 5,
+          "native_size": "217x331",
+          "art_pixel": {
+            "x": 4.7697,
+            "y": 4.7697
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "sprite_height": 309,
+          "accepted": true
+        },
+        {
+          "hint": 6,
+          "native_size": "189x280",
+          "art_pixel": {
+            "x": 5.5857,
+            "y": 5.5857
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "sprite_height": 261,
+          "accepted": true
+        },
+        {
+          "hint": 7,
+          "native_size": "137x207",
+          "art_pixel": {
+            "x": 7.56,
+            "y": 7.56
+          },
+          "quality": 2,
+          "notes": [
+            "elastic"
+          ],
+          "sprite_height": 193,
+          "accepted": true
+        },
+        {
+          "hint": 8,
+          "native_size": "129x194",
+          "art_pixel": {
+            "x": 7.938,
+            "y": 7.9514
+          },
+          "quality": 1,
+          "notes": [],
+          "sprite_height": null,
+          "accepted": false
+        },
+        {
+          "hint": 7.46,
+          "native_size": "129x194",
+          "art_pixel": {
+            "x": 7.938,
+            "y": 7.9514
+          },
+          "quality": 1,
+          "notes": [],
+          "sprite_height": null,
+          "accepted": false
+        }
+      ]
+    },
+    "native_size": "137x207",
+    "art_pixel_size": {
+      "x": 7.56,
+      "y": 7.56
+    },
+    "grid": {
+      "cols": 137,
+      "rows": 207,
+      "pixelSize": {
+        "x": 7.56,
+        "y": 7.56
+      },
+      "quality": 2,
+      "notes": [
+        "elastic"
+      ]
+    }
+  },
+  "resized": null,
+  "usage": {
+    "input_tokens": 56761,
+    "cached_input_tokens": 40576,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 835,
+    "reasoning_output_tokens": 0
+  },
+  "estimated_cost_usd": 0,
+  "cost_note": "Codex: no money. The image used the ChatGPT plan quota.",
+  "codex": {
+    "cli": "codex-cli 0.170.0",
+    "thread_id": "01a1f53c-5ff6-7a40-a474-98683d3eddac",
+    "raw_codex_file": "/home/salvi/.codex/generated_images/01a1f53c-5ff6-7a40-a474-98683d3eddac/exec-18436933-4fac-4ae3-a392-2fbf8a89f5a2.png",
+    "rollout": "/home/salvi/.codex/sessions/2026/11/19/rollout-2026-11-19T16-15-37-01a1f53c-5ff6-7a40-a474-98683d3eddac.jsonl",
+    "image_model": "gpt-image-2 (fixed by Codex, size auto, quality auto)",
+    "quota_before": {
+      "ordinary_usage_allowed": true,
+      "plan": "plus",
+      "reached": null,
+      "spend_control_reached": false,
+      "primary": {
+        "usedPercent": 7,
+        "windowDurationMins": 300,
+        "resetsAt": 1795126327
+      },
+      "secondary": {
+        "usedPercent": 1,
+        "windowDurationMins": 10080,
+        "resetsAt": 1795713127
+      }
+    },
+    "quota_after": {
+      "ordinary_usage_allowed": true,
+      "plan": "plus",
+      "reached": null,
+      "spend_control_reached": false,
+      "primary": {
+        "usedPercent": 10,
+        "windowDurationMins": 300,
+        "resetsAt": 1795126327
+      },
+      "secondary": {
+        "usedPercent": 2,
+        "windowDurationMins": 10080,
+        "resetsAt": 1795713127
+      }
+    },
+    "corner_key_applied": false
+  },
+  "request_id": "01a1f53c-5ff6-7a40-a474-98683d3eddac"
+}
