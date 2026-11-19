@@ -1,6 +1,6 @@
 # pixel-art-tests primitives
 
-> Primitives of `pixel-art-tests`, in one file at the project root. Status is `confirmed` or `inferred`. The project is not a git repository, so no entry has a `pending` marker.
+> Primitives of `pixel-art-tests`, in one file at the project root. The integration branch is `main`. Status is `confirmed` or `inferred`; `pending <branch>` marks code that `main` does not have yet.
 
 ## sprite animation
 
